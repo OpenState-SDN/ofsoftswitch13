@@ -631,7 +631,7 @@ enum ofp_capabilities {
     OFPC_IP_REASM = 1 << 5,    /* Can reassemble IP fragments. */
     OFPC_QUEUE_STATS = 1 << 6, /* Queue statistics. */
     OFPC_PORT_BLOCKED = 1 << 8, /* Switch will block looping ports. */
-    OFPC_TABLE_STATEFUL = 1 << 9  /* because is goes upon 32 bit */
+    OFPC_TABLE_STATEFULL = 1 << 9  /* because is goes upon 32 bit */
 };
 
 /* Switch configuration. */
