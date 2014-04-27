@@ -1,4 +1,4 @@
-/* Copyright (c) 2011, TrafficLab, Ericsson Research, Hungary
+/*
  * Copyright (c) 2012, CPqD, Brazil
  * All rights reserved.
  *
@@ -52,7 +52,7 @@
 #include "oflib/oxm-match.h"
 #include "vlog.h"
 #include "state_table.h"
-
+#include "dp_capabilities.h"
 
 #define LOG_MODULE VLM_pipeline
 
@@ -61,11 +61,12 @@ static struct vlog_rate_limit rl = VLOG_RATE_LIMIT_INIT(60, 60);
 static void
 execute_entry(struct pipeline *pl, struct flow_entry *entry,
               struct flow_table **table, struct packet **pkt);
-
+/**
 struct pipeline *pipeline_create(struct datapath *dp) {
     struct pipeline *pl;
     int i;
     printf("here is the create pipeline\n");
+    printf("capabilities %2x\n",DP_SUPPORTED_CAPABILITIES);
 
     // hardcoded statefull table init 
     // in table 0 set OFPCT_TABLE_STATEFULL 
@@ -90,14 +91,23 @@ struct pipeline *pipeline_create(struct datapath *dp) {
         struct key_extractor *kext;
         kext= xmalloc(sizeof(struct key_extractor));
 	kext->field_count=1;
-//	kext->fields[0]=OXM_OF_IPV4_SRC;
-	kext->fields[0]=OXM_OF_ETH_SRC;
+	
+	kext->fields[0]=OXM_OF_ETH_SRC;		//update
+	state_table_set_extractor(stable,kext,0);
+	kext->fields[0]=OXM_OF_ETH_DST;		//lookup	
+	state_table_set_extractor(stable,kext,1);
+
 //	printf("key field extractor is %d \n",kext->fields[0]);	
-	int update;
-        for (update=0;update<2;++update)
-	{
-	    state_table_set_extractor(stable,kext,update);
-	}
+	
+      
+	////// int update;
+	///// for (update=0;update<2;++update)
+	////{
+	////    state_table_set_extractor(stable,kext,update);
+	//////}
+	
+
+
 	int number_flow_entry=0;
 	for(number_flow_entry;number_flow_entry<2;number_flow_entry++)
 	{
@@ -145,14 +155,15 @@ struct pipeline *pipeline_create(struct datapath *dp) {
    
     return pl;
 } 
+**/
 /* replaced with upper func. instructions*/
-/*******
+
 struct pipeline *
 pipeline_create(struct datapath *dp) {
     struct pipeline *pl;
     int i;
 
-    printf("here is the create pipeline\n");
+    printf("here is the create pipeline %02x \n",OXM_OF_ETH_SRC);
     pl = xmalloc(sizeof(struct pipeline));
     for (i=0; i<PIPELINE_TABLES; i++) {
         pl->tables[i] = flow_table_create(dp, i);
@@ -163,7 +174,6 @@ pipeline_create(struct datapath *dp) {
 
     return pl;
 }
-*/
 
 static bool
 is_table_miss(struct flow_entry *entry){
@@ -314,7 +324,7 @@ pipeline_handle_state_mod(struct pipeline *pl, struct ofl_msg_state_mod *msg,
     printf("here is handle state mod func\n");
     ofl_err error;
 	struct state_table *st = pl->tables[msg->table_id]->state_table;
-
+	
 	if (msg->command == OFPSC_SET_L_EXTRACTOR || msg->command == OFPSC_SET_U_EXTRACTOR) {
 		struct ofl_msg_extraction *p = (struct ofl_msg_extraction *) msg->payload;	
 
