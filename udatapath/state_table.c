@@ -36,7 +36,7 @@ void __extract_key(uint8_t *buf, struct key_extractor *extractor, struct packet 
 				if (type == f->header) {
 					memcpy(&buf[l], f->value, OXM_LENGTH(f->header));
 					l = l + OXM_LENGTH(f->header);//keeps only 8 last bits of oxm_header that contains oxm_length(in which length of oxm_payload).
-					printf("extracting key with type %02X\n", type);
+			        	//printf("extracting key with type %02X\n", type);
 					break;
 				}
 		}
@@ -46,7 +46,7 @@ void __extract_key(uint8_t *buf, struct key_extractor *extractor, struct packet 
 struct state_entry * state_table_lookup(struct state_table* table, struct packet *pkt) {
 	struct state_entry * e = NULL;	
 	uint8_t key[MAX_STATE_KEY_LEN] = {0};
-        //printf("extracting read field with type %02X\n", table->read_key.fields[0]);
+        printf("extracting read field with type %zu\n", table->read_key.fields[0]);
     __extract_key(key, &table->read_key, pkt);
                                         int h;
                                         printf("ethernet address is:");
