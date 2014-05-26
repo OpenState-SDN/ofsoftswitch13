@@ -61,7 +61,7 @@ static struct vlog_rate_limit rl = VLOG_RATE_LIMIT_INIT(60, 60);
 static void
 execute_entry(struct pipeline *pl, struct flow_entry *entry,
               struct flow_table **table, struct packet **pkt);
-/**
+/****
 struct pipeline *pipeline_create(struct datapath *dp) {
     struct pipeline *pl;
     int i;
@@ -150,12 +150,10 @@ struct pipeline *pipeline_create(struct datapath *dp) {
 	}	
 }
 
-    // set lookup and update extractors via function state_table_set_extractor 
-    // add 2 flow entries. 1 for default state, 1 for state = 1 
    
     return pl;
 } 
-**/
+****/
 /* replaced with upper func. instructions*/
 
 struct pipeline *
@@ -328,6 +326,7 @@ pipeline_handle_state_mod(struct pipeline *pl, struct ofl_msg_state_mod *msg,
 	if (msg->command == OFPSC_SET_L_EXTRACTOR || msg->command == OFPSC_SET_U_EXTRACTOR) {
 		struct ofl_msg_extraction *p = (struct ofl_msg_extraction *) msg->payload;	
 
+    		printf("field count in pipeline state mod:%d\n",p->field_count);
 		int update = 0;
 		if (msg->command == OFPSC_SET_U_EXTRACTOR) 
 			update == 1;
