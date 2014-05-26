@@ -1563,18 +1563,23 @@ ofl_msg_unpack_empty(struct ofp_header *src UNUSED, size_t *len, struct ofl_msg_
 
 static ofl_err
 ofl_structs_extraction_unpack(struct ofp_extraction *src, size_t *len, struct ofl_msg_extraction **dst) {
-    struct ofl_msg_extraction *extract=(struct ofl_msg_extraction *)malloc(sizeof(struct ofl_msg_extraction));
+    struct ofl_msg_extraction *extract=(struct ofl_msg_extraction *)dst;
     int error=0;
-    OFL_LOG_WARN(LOG_MODULE, "field count is %zu.",ntohl(src->field_count));
-    if(*len < sizeof(struct ofp_extraction)){
+    int i;
+    if(*len < (1+ntohl(src->field_count))*sizeof(uint32_t))
+    { //control of struct ofp_extraction length.
        OFL_LOG_WARN(LOG_MODULE, "Received state mod extraction is too short (%zu).", *len);
+       printf("STATE MODE received extraction struct is too short %zu\n" ,*len);
        return ofl_error(OFPET_BAD_ACTION, OFPBAC_BAD_LEN);
     }
     extract->field_count=ntohl(src->field_count);
-    memcpy(extract->fields,src->fields,(extract->field_count)*sizeof(uint32_t));
-    *len -= sizeof(struct ofl_msg_extraction);
-    OFL_LOG_WARN(LOG_MODULE, "fields array (%zu).", extract->fields[0]);
-    *dst=extract;
+    printf("field count is %d\n",extract->field_count);
+    for (i=0;i<extract->field_count;i++)
+    {
+        extract->fields[i]=ntohl(src->fields[i]);
+    }
+    *len -= ((1+ntohl(src->field_count))*sizeof(uint32_t));
+    printf("fields array %02x \n.", extract->fields[0]);
     return 0;
 }
 
@@ -1585,19 +1590,12 @@ ofl_msg_unpack_state_mod(struct ofp_header *src, size_t *len, struct ofl_msg_hea
     ofl_err error;
     size_t i;
     int state_entry_pos;
-    OFL_LOG_WARN(LOG_MODULE, "CAZZOOOOOOO1\n");
    
     
     if (*len < sizeof(struct ofp_state_mod)) {
         OFL_LOG_WARN(LOG_MODULE, "Received STATE_MOD message has invalid length (%zu).", *len);
         return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
     }
-
-        OFL_LOG_WARN(LOG_MODULE, "Received STATE MODE directly is %zu",*len);
-        OFL_LOG_WARN(LOG_MODULE, " len of state mod header is %zu",sizeof(struct ofp_state_mod));
-        OFL_LOG_WARN(LOG_MODULE, " STATE MODE len extraction is %zu" ,sizeof(struct ofp_extraction));
-        OFL_LOG_WARN(LOG_MODULE, " STATE MODE len entry is %zu" ,sizeof(struct ofp_state_entry));
-
     sm = (struct ofp_state_mod *)src;
     dm = (struct ofl_msg_state_mod *)malloc(sizeof(struct ofl_msg_state_mod));
     
@@ -1612,15 +1610,13 @@ ofl_msg_unpack_state_mod(struct ofp_header *src, size_t *len, struct ofl_msg_hea
     dm->command =             (enum ofp_state_mod_command)sm->command;
     
     *len -= (2*sizeof(uint64_t)+2*sizeof(uint8_t)); //size of ofp_state_mod without payload
-    OFL_LOG_WARN(LOG_MODULE, " STATE MODE before command len entry is %zu" ,*len);
-    
+    printf(" STATE MODE before command len entry is %zu \n" ,*len);
+
     if (dm->command == OFPSC_ADD_FLOW_STATE || dm->command == OFPSC_DEL_FLOW_STATE){
 	state_entry_pos = sizeof(struct ofp_state_mod);
    } 
     else if(dm->command ==OFPSC_SET_L_EXTRACTOR || dm->command == OFPSC_SET_U_EXTRACTOR){
-	//state_entry_pos=sizeof(struct ofp_extraction); 
-        OFL_LOG_WARN(LOG_MODULE, " STATE MODE before in unpack len entry is %zu" ,*len);
-	error = ofl_structs_extraction_unpack(&(sm->payload), len, &(dm->payload));
+	error = ofl_structs_extraction_unpack(&(sm->payload), len,&(dm->payload));
     	if (error) {
             free(dm);
             return error;
