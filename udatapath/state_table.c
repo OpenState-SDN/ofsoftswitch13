@@ -46,8 +46,8 @@ void __extract_key(uint8_t *buf, struct key_extractor *extractor, struct packet 
 struct state_entry * state_table_lookup(struct state_table* table, struct packet *pkt) {
 	struct state_entry * e = NULL;	
 	uint8_t key[MAX_STATE_KEY_LEN] = {0};
-        printf("extracting read field with type %zu\n", table->read_key.fields[0]);
-    __extract_key(key, &table->read_key, pkt);
+        //printf("extracting read field with type %zu\n", table->read_key.fields[0]);
+        __extract_key(key, &table->read_key, pkt);
                                         int h;
                                         printf("ethernet address is:");
                                         for (h=0;h<6;h++){
@@ -128,6 +128,7 @@ void state_table_set_state(struct state_table *table, struct packet *pkt, uint32
 		hmap_node, hash_bytes(key, MAX_STATE_KEY_LEN, 0), &table->state_entries){
 			if (!memcmp(key, e->key, MAX_STATE_KEY_LEN)){
 				e->state = state;
+				printf("state value is copied to hash map is %d \n",state);
 				return;
 			}
 	}
@@ -135,5 +136,6 @@ void state_table_set_state(struct state_table *table, struct packet *pkt, uint32
 	e = malloc(sizeof(struct state_entry));
 	memcpy(e->key, key, MAX_STATE_KEY_LEN);
 	e->state = state;
-    hmap_insert(&table->state_entries, &e->hmap_node, hash_bytes(key, MAX_STATE_KEY_LEN, 0));
+	printf("state value is inserted to hash map is %d \n",state);
+        hmap_insert(&table->state_entries, &e->hmap_node, hash_bytes(key, MAX_STATE_KEY_LEN, 0));
 }
