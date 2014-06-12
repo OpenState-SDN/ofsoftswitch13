@@ -476,7 +476,7 @@ struct ofp_instruction_set_state {
     uint16_t type; /* OFPIT_SET_STATE */
     uint16_t len;  /* Length is 8. */
     uint32_t state; /* Next state value */
-    uint32_t timeout;  /* State soft timeout in seconds */
+    uint32_t timeout;  /* State soft timeout in milliseconds seconds */
     uint32_t to_state; /* Roll back state value*/
 };
 OFP_ASSERT(sizeof(struct ofp_instruction_set_state) == 16);

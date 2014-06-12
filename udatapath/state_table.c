@@ -4,6 +4,7 @@
 #include "lib/hash.h"
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 
 void __extract_key(uint8_t *, struct key_extractor *, struct packet *);
 
@@ -45,9 +46,6 @@ void __extract_key(uint8_t *buf, struct key_extractor *extractor, struct packet 
 struct state_entry * state_table_lookup(struct state_table* table, struct packet *pkt) {
 	struct state_entry * e = NULL;	
 	uint8_t key[MAX_STATE_KEY_LEN] = {0};
-        struct in_addr in;
-	struct sockaddr_in sa;
-	char str[INET_ADDRSTRLEN];
 
         __extract_key(key, &table->read_key, pkt);
 
@@ -63,7 +61,17 @@ struct state_entry * state_table_lookup(struct state_table* table, struct packet
 	else 
 		return e;
 }
-/* having the state value  */
+
+static int __timeout_expired(struct timeval *now, struct timeval *to) {
+	if (now->tv_sec > to->tv_sec)
+		return 1;
+	else if (now->tv_sec == to->tv_sec)
+		return (now->tv_usec > to->tv_usec);
+	else
+		return 0;
+}
+
+
 void state_table_write_metadata(struct state_entry *entry, struct packet *pkt) {
 	struct  ofl_match_tlv *f;
 	uint32_t state;
@@ -71,7 +79,7 @@ void state_table_write_metadata(struct state_entry *entry, struct packet *pkt) {
 	if (entry->to_state) {
 		struct timeval now;
 		gettimeofday(&now, NULL);
-		if (now.tv_sec >= entry->timeout.tv_sec) 
+		if (__timeout_expired(&now, &entry->timeout))
 			state = entry->to_state;
 		else	
 			state = entry->state;
@@ -127,7 +135,8 @@ void state_table_set_state(struct state_table *table, struct packet *pkt, uint32
 				if (to_state) {
 					struct timeval now;
 					gettimeofday(&now, NULL);
-					now.tv_sec += to; 
+					now.tv_sec += to/1000000;
+					now.tv_usec += to%1000000; 
 					memcpy(&e->timeout, &now, sizeof(struct timeval));
 					e->to_state = to_state;
 				}
