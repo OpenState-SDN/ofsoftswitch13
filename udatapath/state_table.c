@@ -87,11 +87,14 @@ void state_table_write_metadata(struct state_entry *entry, struct packet *pkt) {
 	else 
 		state = entry->state;
 
+	//in any case reset timeout
+	entry->to_state = 0;
+	
 	HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv, 
 		hmap_node, hash_int(OXM_OF_METADATA,0), &pkt->handle_std->match.match_fields){
                 uint64_t *metadata = (uint64_t*) f->value;
                 *metadata = (*metadata & 0x0) | state;
-    }
+    	}
 }
 void state_table_del_state(struct state_table *table, uint8_t *key, uint32_t len) {
 	struct state_entry *e;
