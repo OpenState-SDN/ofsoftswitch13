@@ -191,6 +191,8 @@ ofl_structs_instructions_unpack(struct ofp_instruction *src, size_t *len, struct
             di = (struct ofl_instruction_set_state *)malloc(sizeof(struct ofl_instruction_set_state));
 
             di->state = ntohl(si->state);
+	    di->timeout=ntohl(si->timeout);
+	    di->to_state=ntohl(si->timeout);
 
             inst = (struct ofl_instruction_header *)di;
             ilen -= sizeof(struct ofp_instruction_set_state);
