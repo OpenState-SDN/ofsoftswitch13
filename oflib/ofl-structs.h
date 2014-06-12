@@ -116,7 +116,8 @@ struct ofl_instruction_meter {
 struct ofl_instruction_set_state {
     struct ofl_instruction_header   header; /* OFPIT_METER */
     uint32_t state;
-    //uint64_t state;
+    uint32_t timeout;
+    uint32_t to_state;
 };
 
 /* Instruction structure for experimental instructions */

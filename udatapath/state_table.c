@@ -8,25 +8,25 @@
 void __extract_key(uint8_t *, struct key_extractor *, struct packet *);
 
 struct state_table * state_table_create(void) {
-    struct state_table *table = malloc(sizeof(struct state_table));
+	struct state_table *table = malloc(sizeof(struct state_table));
 	memset(table, 0, sizeof(*table));
 	 
-    table->state_entries = (struct hmap) HMAP_INITIALIZER(&table->state_entries);
+	table->state_entries = (struct hmap) HMAP_INITIALIZER(&table->state_entries);
 
 	/* default state entry */
 	table->default_state_entry.state = STATE_DEFAULT;
 	
-    return table;
+	return table;
 }
 
 void state_table_destroy(struct state_table *table) {
 	hmap_destroy(&table->state_entries);
-    free(table);
+	free(table);
 }
 /* having the key extractor field goes to look for these key inside the packet and map to corresponding value and copy the value into buf. */ 
 void __extract_key(uint8_t *buf, struct key_extractor *extractor, struct packet *pkt) {
 	int i, l=0;
-    struct ofl_match_tlv *f;
+	struct ofl_match_tlv *f;
 
 	for (i=0; i<extractor->field_count; i++) {		
 		uint32_t type = (int)extractor->fields[i];
@@ -36,7 +36,6 @@ void __extract_key(uint8_t *buf, struct key_extractor *extractor, struct packet 
 				if (type == f->header) {
 					memcpy(&buf[l], f->value, OXM_LENGTH(f->header));
 					l = l + OXM_LENGTH(f->header);//keeps only 8 last bits of oxm_header that contains oxm_length(in which length of oxm_payload).
-			        	//printf("extracting key with type %02X\n", type);
 					break;
 				}
 		}
@@ -48,48 +47,42 @@ struct state_entry * state_table_lookup(struct state_table* table, struct packet
 	uint8_t key[MAX_STATE_KEY_LEN] = {0};
         struct in_addr in;
 	struct sockaddr_in sa;
-//	char *inetadd;
 	char str[INET_ADDRSTRLEN];
-//printf("extracting read field with type %zu\n", table->read_key.fields[0]);
+
         __extract_key(key, &table->read_key, pkt);
-                      //int h;
-                      printf("the key is:");
-		      //for (h=0;h<4;h++){
- 			//printf("%02X", key[h]);}
-		     memcpy(&(in.s_addr),key,4);		
-		 inet_ntop(AF_INET, &(in.s_addr), str, INET_ADDRSTRLEN);
-		printf("%s\n", str); // prints "192.0.2.33"
-			//	        inetadd = inet_ntoa(in);
-				//	printf("IP address is %s\n",inetadd);
 
 	HMAP_FOR_EACH_WITH_HASH(e, struct state_entry, 
 		hmap_node, hash_bytes(key, MAX_STATE_KEY_LEN, 0), &table->state_entries){
-//	HMAP_FOR_EACH(e, struct state_entry,hmap_node,&table->state_entries){
 			if (!memcmp(key, e->key, MAX_STATE_KEY_LEN)){
-				printf("find corresponding state %d \n",key);
 				return e;
 			}
 	}
 
 	if (e == NULL)
-	{	 
-		printf("not found the corresponding state value\n");
 		return &table->default_state_entry;
-	}
 	else 
 		return e;
 }
 /* having the state value  */
 void state_table_write_metadata(struct state_entry *entry, struct packet *pkt) {
 	struct  ofl_match_tlv *f;
-    
+	uint32_t state;
+
+	if (entry->to_state) {
+		struct timeval now;
+		gettimeofday(&now, NULL);
+		if (now.tv_sec >= entry->timeout.tv_sec) 
+			state = entry->to_state;
+		else	
+			state = entry->state;
+	}	
+	else 
+		state = entry->state;
+
 	HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv, 
 		hmap_node, hash_int(OXM_OF_METADATA,0), &pkt->handle_std->match.match_fields){
                 uint64_t *metadata = (uint64_t*) f->value;
-		//printf("state value is %X\n",entry->state);
-                //*metadata = (*metadata & 0xffff0000) | (entry->state & 0x0000ffff);
-                *metadata = (*metadata & 0x0) | (entry->state);
-		//printf("writing state metadata %X\n",*metadata);
+                *metadata = (*metadata & 0x0) | state;
     }
 }
 void state_table_del_state(struct state_table *table, uint8_t *key, uint32_t len) {
@@ -106,44 +99,39 @@ void state_table_del_state(struct state_table *table, uint8_t *key, uint32_t len
 	if (found)
 		hmap_remove_and_shrink(&table->state_entries, &e->hmap_node);
 }
+
 void state_table_set_extractor(struct state_table *table, struct key_extractor *ke, int update) {
 	struct key_extractor *dest;
-	if (update){
+	if (update)
 		dest = &table->write_key;
-                printf("writing key\n");
-		}
-	else{
+	else
 		dest = &table->read_key;
-                printf("reading key\n");
-		}
+
 	dest->field_count = ke->field_count;
 	memcpy(dest->fields, ke->fields, MAX_EXTRACTION_FIELD_COUNT);
-        //printf("set field =%02x as a  key extractor\n",dest->fields[0]);
 	return;
 }
 
-void state_table_set_state(struct state_table *table, struct packet *pkt, uint32_t state, uint8_t *k, uint32_t len) {
+void state_table_set_state(struct state_table *table, struct packet *pkt, uint32_t state, uint8_t *k, uint32_t len, uint32_t to, uint32_t to_state) {
 	uint8_t key[MAX_STATE_KEY_LEN] = {0};	
 	struct state_entry *e;
 
-	if (pkt){
+	if (pkt)
 		__extract_key(key, &table->write_key, pkt);
-                                        int h;
-                                        printf("ethernet address for write key is:");
-                                        for (h=0;h<6;h++){
-                                        printf("%02X", key[h]);}
-                                        printf("\n");
-		}
-	else {
-
+	else 
 		memcpy(key, k, MAX_STATE_KEY_LEN);
-	        printf("state table no pkt exist \n");
-	}
+
 	HMAP_FOR_EACH_WITH_HASH(e, struct state_entry, 
 		hmap_node, hash_bytes(key, MAX_STATE_KEY_LEN, 0), &table->state_entries){
 			if (!memcmp(key, e->key, MAX_STATE_KEY_LEN)){
+				if (to_state) {
+					struct timeval now;
+					gettimeofday(&now, NULL);
+					now.tv_sec += to; 
+					memcpy(&e->timeout, &now, sizeof(struct timeval));
+					e->to_state = to_state;
+				}
 				e->state = state;
-				printf("state value is copied to hash map is %d \n",state);
 				return;
 			}
 	}
@@ -151,6 +139,5 @@ void state_table_set_state(struct state_table *table, struct packet *pkt, uint32
 	e = malloc(sizeof(struct state_entry));
 	memcpy(e->key, key, MAX_STATE_KEY_LEN);
 	e->state = state;
-	printf("state value is inserted to hash map is %d \n",state);
         hmap_insert(&table->state_entries, &e->hmap_node, hash_bytes(key, MAX_STATE_KEY_LEN, 0));
 }

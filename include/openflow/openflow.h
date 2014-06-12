@@ -475,10 +475,11 @@ OFP_ASSERT(sizeof(struct ofp_instruction_meter) == 8);
 struct ofp_instruction_set_state {
     uint16_t type; /* OFPIT_SET_STATE */
     uint16_t len;  /* Length is 8. */
-    uint32_t state; /* Meter instance. */
-    //uint64_t state;
+    uint32_t state; /* Next state value */
+    uint32_t timeout;  /* State soft timeout in seconds */
+    uint32_t to_state; /* Roll back state value*/
 };
-OFP_ASSERT(sizeof(struct ofp_instruction_set_state) == 8);
+OFP_ASSERT(sizeof(struct ofp_instruction_set_state) == 16);
 //OFP_ASSERT(sizeof(struct ofp_instruction_set_state) == 16);
 
 enum ofp_action_type {

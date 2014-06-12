@@ -334,7 +334,7 @@ pipeline_handle_state_mod(struct pipeline *pl, struct ofl_msg_state_mod *msg,
 	else if (msg->command == OFPSC_ADD_FLOW_STATE) {
 		struct ofl_msg_state_entry *p = (struct ofl_msg_state_entry *) msg->payload;
 		
-		state_table_set_state(st, NULL, p->state, p->key, p->key_len);
+		state_table_set_state(st, NULL, p->state, p->key, p->key_len, p->timeout, p->to_state );
 	}
 	else if (msg->command == OFPSC_DEL_FLOW_STATE) {
 		struct ofl_msg_state_entry *p = (struct ofl_msg_state_entry *) msg->payload;
@@ -690,8 +690,7 @@ execute_entry(struct pipeline *pl, struct flow_entry *entry,
             case OFPIT_SET_STATE: {
                 struct ofl_instruction_set_state *wns = (struct ofl_instruction_set_state *)inst;
 		struct state_table *st = pl->tables[(*pkt)->table_id]->state_table;
-                printf("executing instruction NEXT STATE\n");
-		state_table_set_state(st, *pkt, wns->state, NULL, 0);
+		state_table_set_state(st, *pkt, wns->state, NULL, 0, wns->timeout, wns->to_state);
 		break;
 	    	}
         }

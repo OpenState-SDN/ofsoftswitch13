@@ -488,7 +488,9 @@ struct ofl_msg_state_mod {
 struct ofl_msg_state_entry {
     uint32_t key_len;
     uint32_t state;
-    uint8_t key[OFPSC_MAX_KEY_LEN];
+    uint8_t  key[OFPSC_MAX_KEY_LEN];
+    uint32_t timeout;
+    uint32_t to_state;
 };
 
 struct ofl_msg_extraction {
