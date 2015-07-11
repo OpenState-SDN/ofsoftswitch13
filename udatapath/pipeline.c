@@ -46,7 +46,6 @@
 #include "meter_table.h"
 #include "oflib/ofl.h"
 #include "oflib/ofl-structs.h"
-#include "nbee_link/nbee_link.h"
 #include "util.h"
 #include "hash.h"
 #include "oflib/oxm-match.h"
@@ -72,8 +71,6 @@ pipeline_create(struct datapath *dp) {
         pl->tables[i] = flow_table_create(dp, i);
     }
     pl->dp = dp;
-
-    nblink_initialize();
 
     return pl;
 }
@@ -156,7 +153,7 @@ pipeline_process_packet(struct pipeline *pl, struct packet *pkt) {
         pkt->table_id = next_table->stats->table_id;
         table         = next_table;
         next_table    = NULL;
-		
+
 		if (state_table_is_stateful(table->state_table) && state_table_is_configured(table->state_table)) {
             state_entry = state_table_lookup(table->state_table, pkt);
             if(state_entry!=NULL){
@@ -165,15 +162,15 @@ pipeline_process_packet(struct pipeline *pl, struct packet *pkt) {
                 state_table_write_state(state_entry, pkt);
             }
 		}
-        
+
 
         //add 'flags' virtual header field
-        HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv, 
+        HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv,
             hmap_node, hash_int(OXM_EXP_FLAGS,0), &pkt->handle_std->match.match_fields){
                     uint32_t *flags = (uint32_t*) (f->value + EXP_ID_LEN);
                     *flags = (*flags & 0x00000000 ) | (pkt->dp->global_states);
         }
-        
+
 		if (VLOG_IS_DBG_ENABLED(LOG_MODULE)) {
 			char *m = ofl_structs_match_to_string((struct ofl_match_header*)&(pkt->handle_std->match), pkt->dp->exp);
 			VLOG_DBG_RL(LOG_MODULE, &rl, "searching table entry in table %d for packet match: %s.", table->stats->table_id,m);
@@ -183,7 +180,7 @@ pipeline_process_packet(struct pipeline *pl, struct packet *pkt) {
 		entry = flow_table_lookup(table, pkt, pkt->dp->exp);
 
         //removes 'state' virtual header field
-        
+
         HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv,
                     hmap_node, hash_int(OXM_EXP_STATE,0), &pkt->handle_std->match.match_fields){
                         hmap_remove_and_shrink(&pkt->handle_std->match.match_fields,&f->hmap_node);
@@ -194,7 +191,7 @@ pipeline_process_packet(struct pipeline *pl, struct packet *pkt) {
                 char *m = ofl_structs_flow_stats_to_string(entry->stats, pkt->dp->exp);
                 VLOG_DBG_RL(LOG_MODULE, &rl, "found matching entry: %s.", m);
                 free(m);
-            } 
+            }
 
             pkt->handle_std->table_miss = is_table_miss(entry);
             execute_entry(pl, entry, &next_table, &pkt);
