@@ -86,15 +86,20 @@ stack_high(void)
 static uintptr_t
 stack_low(void)
 {
+    /* FIXME for AMD64 architectures */
+
 #ifdef __i386__
     uintptr_t low;
     asm("movl %%esp,%0" : "=g" (low));
     return low;
 #else
+#pragma GCC diagnostic ignored "-Wreturn-local-addr"
+
     /* This causes a warning in GCC that cannot be disabled, so use it only on
      * non-x86. */
     int dummy;
     return (uintptr_t) &dummy;
+#pragma GCC diagnostic pop
 #endif
 }
 
