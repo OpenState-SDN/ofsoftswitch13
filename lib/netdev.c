@@ -878,6 +878,7 @@ do_open_netdev(const char *name, int ethertype, int tap_fd,
 error:
     error = errno;
 error_already_set:
+    /* FIXME */
     close(netdev_fd);
     if (tap_fd >= 0) {
         close(tap_fd);
@@ -1064,12 +1065,12 @@ netdev_recv(struct netdev *netdev, struct ofpbuf *buffer, size_t max_mtu)
                 }
                 /* VLAN tag found. Shift MAC addresses down and insert VLAN tag */
                 /* Create headroom for the VLAN tag */
-                eth_type = ntohs(*((uint16_t *)(buffer->data + ETHER_ADDR_LEN * 2)));                
+                eth_type = ntohs(*((uint16_t *)(buffer->data + ETHER_ADDR_LEN * 2)));
                 ofpbuf_push_uninit(buffer, VLAN_HEADER_LEN);
                 memmove(buffer->data, (uint8_t*)buffer->data+VLAN_HEADER_LEN, ETH_ALEN * 2);
                 tag = (struct vlan_tag *)((uint8_t*)buffer->data + ETH_ALEN * 2);
-                if (eth_type == ETH_TYPE_VLAN_PBB_S || 
-                    eth_type == ETH_TYPE_VLAN_PBB_B || 
+                if (eth_type == ETH_TYPE_VLAN_PBB_S ||
+                    eth_type == ETH_TYPE_VLAN_PBB_B ||
                     eth_type == ETH_TYPE_VLAN){
                     tag->vlan_tp_id = htons(ETH_TYPE_VLAN_PBB_B);
                 }
@@ -1085,7 +1086,7 @@ netdev_recv(struct netdev *netdev, struct ofpbuf *buffer, size_t max_mtu)
         if (sll.sll_pkttype == PACKET_OUTGOING) {
             return EAGAIN;
         }
-        buffer->size += n_bytes;        
+        buffer->size += n_bytes;
 #endif
         /* When the kernel internally sends out an Ethernet frame on an
          * interface, it gives us a copy *before* padding the frame to the
