@@ -527,7 +527,7 @@ check_ofp_packet_out(const struct ofp_header *oh, struct ofpbuf *data,
         return error;
     }
 
-    data->data = (void *) &opo->actions[n_actions];
+    data->data = CONST_CAST(void *, &opo->actions[n_actions]);
     data->size = extra - actions_len;
     *n_actionsp = n_actions;
     return 0;
