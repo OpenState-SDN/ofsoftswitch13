@@ -722,7 +722,7 @@ static int
 do_open_netdev(const char *name, int ethertype, int tap_fd,
                struct netdev **netdev_)
 {
-    int netdev_fd;
+    int netdev_fd = 0;
     int netlink_fd;
     struct sockaddr_ll sll;
     struct sockaddr_nl snl;
@@ -878,8 +878,9 @@ do_open_netdev(const char *name, int ethertype, int tap_fd,
 error:
     error = errno;
 error_already_set:
-    /* FIXME */
-    close(netdev_fd);
+
+    if (netdev_fd)
+	close(netdev_fd);
     if (tap_fd >= 0) {
         close(tap_fd);
     }
