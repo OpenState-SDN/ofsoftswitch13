@@ -67,6 +67,7 @@ AC_SUBST(KARCH)
 OFP_CHECK_DPKG_BUILDPACKAGE
 
 OFP_ENABLE_OPTION([-Wall])
+OFP_ENABLE_OPTION([-Wextra])
 OFP_ENABLE_OPTION([-Wno-sign-compare])
 OFP_ENABLE_OPTION([-Wpointer-arith])
 OFP_ENABLE_OPTION([-Wdeclaration-after-statement])
