@@ -223,7 +223,7 @@ static struct ofl_exp_stats dpctl_exp_stats =
 
 static struct ofl_exp_field dpctl_exp_field =
         {.unpack     = ofl_exp_field_unpack,
-         .pack       = ofl_exp_field_pack, 
+         .pack       = ofl_exp_field_pack,
          .match      = ofl_exp_field_match,
          .compare    = ofl_exp_field_compare,
          .match_std  = ofl_exp_field_match_std,
@@ -241,7 +241,8 @@ static struct ofl_exp dpctl_exp =
 
 static void
 dpctl_transact(struct vconn *vconn, struct ofl_msg_header *req,
-	       struct ofl_msg_header **repl, uint32_t *repl_xid_p) {
+	       struct ofl_msg_header **repl, uint32_t *repl_xid_p)
+{
     struct ofpbuf *ofpbufreq, *ofpbufrepl;
     uint8_t *bufreq;
     size_t bufreq_size;
@@ -274,7 +275,8 @@ dpctl_transact(struct vconn *vconn, struct ofl_msg_header *req,
 
 static void
 dpctl_transact_and_print(struct vconn *vconn, struct ofl_msg_header *req,
-                                        struct ofl_msg_header **repl) {
+                                        struct ofl_msg_header **repl)
+{
     struct ofl_msg_header *reply;
     uint32_t repl_xid;
     char *str;
@@ -294,7 +296,8 @@ dpctl_transact_and_print(struct vconn *vconn, struct ofl_msg_header *req,
 }
 
 static void
-dpctl_barrier(struct vconn *vconn) {
+dpctl_barrier(struct vconn *vconn)
+{
     struct ofl_msg_header *reply;
     uint32_t repl_xid;
     char *str;
@@ -317,7 +320,8 @@ dpctl_barrier(struct vconn *vconn) {
 }
 
 static void
-dpctl_send(struct vconn *vconn, struct ofl_msg_header *msg) {
+dpctl_send(struct vconn *vconn, struct ofl_msg_header *msg)
+{
     struct ofpbuf *ofpbuf;
     uint8_t *buf;
     size_t buf_size;
@@ -341,7 +345,8 @@ dpctl_send(struct vconn *vconn, struct ofl_msg_header *msg) {
 }
 
 static void
-dpctl_send_and_print(struct vconn *vconn, struct ofl_msg_header *msg) {
+dpctl_send_and_print(struct vconn *vconn, struct ofl_msg_header *msg)
+{
     char *str;
     str = ofl_msg_to_string(msg, &dpctl_exp);
     printf("\nSENDING (xid=0x%X):\n%s\n\n", global_xid, str);
@@ -351,7 +356,8 @@ dpctl_send_and_print(struct vconn *vconn, struct ofl_msg_header *msg) {
 }
 
 static void
-ping(struct vconn *vconn, int argc, char *argv[]) {
+ping(struct vconn *vconn, int argc, char *argv[])
+{
     uint16_t payload_size = 0;
     size_t times = 0, i;
     struct ofl_msg_echo *reply;
@@ -406,7 +412,8 @@ ping(struct vconn *vconn, int argc, char *argv[]) {
 }
 
 static void
-monitor(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED) {
+monitor(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED)
+{
     struct ofpbuf *buf;
     struct ofl_msg_header *msg;
     char *str;
@@ -439,7 +446,8 @@ monitor(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED) {
 }
 
 static void
-table_features(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED) {
+table_features(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED)
+{
     struct ofl_msg_multipart_request_table_features req =
         {{{.type = OFPT_MULTIPART_REQUEST},
               .type = OFPMP_TABLE_FEATURES, .flags = 0x0000},
@@ -452,7 +460,8 @@ table_features(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED) {
 
 
 static void
-features(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED) {
+features(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED)
+{
     struct ofl_msg_header req =
             {.type = OFPT_FEATURES_REQUEST};
 
@@ -460,7 +469,8 @@ features(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED) {
 }
 
 static void
-get_config(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED) {
+get_config(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED)
+{
     struct ofl_msg_header req =
             {.type = OFPT_GET_CONFIG_REQUEST};
 
@@ -470,7 +480,8 @@ get_config(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED) {
 
 
 static void
-stats_desc(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED) {
+stats_desc(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED)
+{
     struct ofl_msg_multipart_request_header req =
             {{.type = OFPT_MULTIPART_REQUEST},
              .type = OFPMP_DESC, .flags = 0x0000};
@@ -479,7 +490,8 @@ stats_desc(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED) {
 }
 
 static void
-port_desc(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED) {
+port_desc(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED)
+{
     struct ofl_msg_multipart_request_header req =
             {{.type = OFPT_MULTIPART_REQUEST},
              .type = OFPMP_PORT_DESC, .flags = 0x0000};
@@ -488,7 +500,8 @@ port_desc(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED) {
 }
 
 static void
-stats_flow(struct vconn *vconn, int argc, char *argv[]) {
+stats_flow(struct vconn *vconn, int argc, char *argv[])
+{
     struct ofl_msg_multipart_request_flow req =
             {{{.type = OFPT_MULTIPART_REQUEST},
               .type = OFPMP_FLOW, .flags = 0x0000},
@@ -511,8 +524,9 @@ stats_flow(struct vconn *vconn, int argc, char *argv[]) {
 }
 
 static void
-stats_state(struct vconn *vconn, int argc, char *argv[]) {
-    struct ofl_exp_msg_multipart_request_state req =   
+stats_state(struct vconn *vconn, int argc, char *argv[])
+{
+    struct ofl_exp_msg_multipart_request_state req =
              {{{{{.type = OFPT_MULTIPART_REQUEST},
                   .type = OFPMP_EXPERIMENTER, .flags = 0x0000},
                  .experimenter_id = OPENSTATE_VENDOR_ID},
@@ -541,17 +555,19 @@ stats_state(struct vconn *vconn, int argc, char *argv[]) {
 }
 
 static void
-stats_global_state(struct vconn *vconn, int argc, char *argv[]) {
+stats_global_state(struct vconn *vconn, int argc, char *argv[])
+{
     struct ofl_exp_msg_multipart_request_global_state req =
             {{{{{.type = OFPT_MULTIPART_REQUEST},
                 .type = OFPMP_EXPERIMENTER, .flags = 0x0000},
                  .experimenter_id = OPENSTATE_VENDOR_ID},
-                 .type = OFPMP_EXP_FLAGS_STATS}}; 
+                 .type = OFPMP_EXP_FLAGS_STATS}};
     dpctl_transact_and_print(vconn, (struct ofl_msg_header *)&req, NULL);
 }
 
 static void
-stats_aggr(struct vconn *vconn, int argc, char *argv[]) {
+stats_aggr(struct vconn *vconn, int argc, char *argv[])
+{
     struct ofl_msg_multipart_request_flow req =
             {{{.type = OFPT_MULTIPART_REQUEST},
               .type = OFPMP_AGGREGATE, .flags = 0x0000},
@@ -575,7 +591,8 @@ stats_aggr(struct vconn *vconn, int argc, char *argv[]) {
 }
 
 static void
-stats_table(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED) {
+stats_table(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED)
+{
     struct ofl_msg_multipart_request_header req =
             {{.type = OFPT_MULTIPART_REQUEST},
              .type = OFPMP_TABLE, .flags = 0x0000};
@@ -584,9 +601,9 @@ stats_table(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED) {
 }
 
 
-
 static void
-stats_port(struct vconn *vconn, int argc, char *argv[]) {
+stats_port(struct vconn *vconn, int argc, char *argv[])
+{
     struct ofl_msg_multipart_request_port req =
             {{{.type = OFPT_MULTIPART_REQUEST},
               .type = OFPMP_PORT_STATS, .flags = 0x0000},
@@ -602,7 +619,8 @@ stats_port(struct vconn *vconn, int argc, char *argv[]) {
 
 
 static void
-stats_queue(struct vconn *vconn, int argc, char *argv[]) {
+stats_queue(struct vconn *vconn, int argc, char *argv[])
+{
     struct ofl_msg_multipart_request_queue req =
             {{{.type = OFPT_MULTIPART_REQUEST},
               .type = OFPMP_QUEUE, .flags = 0x0000},
@@ -622,7 +640,8 @@ stats_queue(struct vconn *vconn, int argc, char *argv[]) {
 
 
 static void
-stats_group(struct vconn *vconn, int argc, char *argv[]) {
+stats_group(struct vconn *vconn, int argc, char *argv[])
+{
     struct ofl_msg_multipart_request_group req =
             {{{.type = OFPT_MULTIPART_REQUEST},
               .type = OFPMP_GROUP, .flags = 0x0000},
@@ -638,7 +657,8 @@ stats_group(struct vconn *vconn, int argc, char *argv[]) {
 
 
 static void
-stats_group_desc(struct vconn *vconn, int argc, char *argv[]) {
+stats_group_desc(struct vconn *vconn, int argc, char *argv[])
+{
     struct ofl_msg_multipart_request_group req =
             {{{.type = OFPT_MULTIPART_REQUEST},
               .type = OFPMP_GROUP_DESC, .flags = 0x0000},
@@ -652,7 +672,8 @@ stats_group_desc(struct vconn *vconn, int argc, char *argv[]) {
 }
 
 static void
-set_config(struct vconn *vconn, int argc UNUSED, char *argv[]) {
+set_config(struct vconn *vconn, int argc UNUSED, char *argv[])
+{
     struct ofl_msg_set_config msg =
             {{.type = OFPT_SET_CONFIG},
              .config = NULL};
@@ -669,7 +690,8 @@ set_config(struct vconn *vconn, int argc UNUSED, char *argv[]) {
 
 
 static void
-flow_mod(struct vconn *vconn, int argc, char *argv[]) {
+flow_mod(struct vconn *vconn, int argc, char *argv[])
+{
     struct ofl_msg_flow_mod msg =
             {{.type = OFPT_FLOW_MOD},
              .cookie = 0x0000000000000000ULL,
@@ -706,7 +728,7 @@ flow_mod(struct vconn *vconn, int argc, char *argv[]) {
                 If the match is empty, the argv is modified
                 causing errors to instructions parsing*/
                 char *cpy = malloc(strlen(argv[1]));
-                memcpy(cpy, argv[1], strlen(argv[1])); 
+                memcpy(cpy, argv[1], strlen(argv[1]));
                 parse_match(cpy, &(msg.match));
                 free(cpy);
                 if(msg.match->length <= 4){
@@ -729,7 +751,8 @@ flow_mod(struct vconn *vconn, int argc, char *argv[]) {
 
 
 static void
-group_mod(struct vconn *vconn, int argc, char *argv[]) {
+group_mod(struct vconn *vconn, int argc, char *argv[])
+{
     struct ofl_msg_group_mod msg =
             {{.type = OFPT_GROUP_MOD},
              .command  = OFPGC_ADD,
@@ -764,8 +787,8 @@ group_mod(struct vconn *vconn, int argc, char *argv[]) {
 }
 
 static void
-group_features(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED){
-
+group_features(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED)
+{
     struct ofl_msg_multipart_request_header req =
             {{.type = OFPT_MULTIPART_REQUEST},
              .type = OFPMP_GROUP_FEATURES, .flags = 0x0000};
@@ -773,8 +796,8 @@ group_features(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED){
     dpctl_transact_and_print(vconn, (struct ofl_msg_header *)&req, NULL);
 }
 
-static void meter_mod(struct vconn *vconn, int argc, char *argv[]){
-
+static void meter_mod(struct vconn *vconn, int argc, char *argv[])
+{
     struct ofl_msg_meter_mod msg =
                 {{.type = OFPT_METER_MOD},
                  .command = OFPMC_ADD,
@@ -799,8 +822,8 @@ static void meter_mod(struct vconn *vconn, int argc, char *argv[]){
 }
 
 static void
-stats_meter(struct vconn *vconn, int argc UNUSED, char *argv[]){
-
+stats_meter(struct vconn *vconn, int argc UNUSED, char *argv[])
+{
     struct ofl_msg_multipart_meter_request req =
             {{{.type = OFPT_MULTIPART_REQUEST},
               .type = OFPMP_METER, .flags = 0x0000},
@@ -815,8 +838,8 @@ stats_meter(struct vconn *vconn, int argc UNUSED, char *argv[]){
 }
 
 static void
-meter_config(struct vconn *vconn, int argc UNUSED, char *argv[]){
-
+meter_config(struct vconn *vconn, int argc UNUSED, char *argv[])
+{
     struct ofl_msg_multipart_meter_request req =
             {{{.type = OFPT_MULTIPART_REQUEST},
               .type = OFPMP_METER_CONFIG, .flags = 0x0000},
@@ -830,8 +853,8 @@ meter_config(struct vconn *vconn, int argc UNUSED, char *argv[]){
 }
 
 static void
-meter_features(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED){
-
+meter_features(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED)
+{
     struct ofl_msg_multipart_request_header req =
             {{.type = OFPT_MULTIPART_REQUEST},
              .type = OFPMP_METER_FEATURES, .flags = 0x0000};
@@ -840,7 +863,8 @@ meter_features(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED){
 }
 
 static void
-port_mod(struct vconn *vconn, int argc UNUSED, char *argv[]) {
+port_mod(struct vconn *vconn, int argc UNUSED, char *argv[])
+{
     struct ofl_msg_port_mod msg =
             {{.type = OFPT_PORT_MOD},
              .port_no = OFPP_ANY,
@@ -858,7 +882,8 @@ port_mod(struct vconn *vconn, int argc UNUSED, char *argv[]) {
 
 
 static void
-table_mod(struct vconn *vconn, int argc UNUSED, char *argv[]) {
+table_mod(struct vconn *vconn, int argc UNUSED, char *argv[])
+{
     struct ofl_msg_table_mod msg =
             {{.type = OFPT_TABLE_MOD},
              .table_id = 0xff,
@@ -872,7 +897,8 @@ table_mod(struct vconn *vconn, int argc UNUSED, char *argv[]) {
 
 
 static void
-queue_get_config(struct vconn *vconn, int argc UNUSED, char *argv[]) {
+queue_get_config(struct vconn *vconn, int argc UNUSED, char *argv[])
+{
     struct ofl_msg_queue_get_config_request msg =
             {{.type = OFPT_QUEUE_GET_CONFIG_REQUEST},
              .port = OFPP_ALL};
@@ -887,7 +913,8 @@ queue_get_config(struct vconn *vconn, int argc UNUSED, char *argv[]) {
 
 
 static void
-set_desc(struct vconn *vconn, int argc UNUSED, char *argv[]) {
+set_desc(struct vconn *vconn, int argc UNUSED, char *argv[])
+{
     struct ofl_exp_openflow_msg_set_dp_desc msg =
             {{{{.type = OFPT_EXPERIMENTER},
                .experimenter_id = OPENFLOW_VENDOR_ID},
@@ -900,7 +927,8 @@ set_desc(struct vconn *vconn, int argc UNUSED, char *argv[]) {
 
 
 static void
-queue_mod(struct vconn *vconn, int argc UNUSED, char *argv[]) {
+queue_mod(struct vconn *vconn, int argc UNUSED, char *argv[])
+{
     struct ofl_packet_queue *pq;
     struct ofl_queue_prop_min_rate *p;
 
@@ -939,7 +967,8 @@ queue_mod(struct vconn *vconn, int argc UNUSED, char *argv[]) {
 
 
 static void
-queue_del(struct vconn *vconn, int argc UNUSED, char *argv[]) {
+queue_del(struct vconn *vconn, int argc UNUSED, char *argv[])
+{
     struct ofl_packet_queue *pq;
 
     struct ofl_exp_openflow_msg_queue msg =
@@ -966,8 +995,8 @@ queue_del(struct vconn *vconn, int argc UNUSED, char *argv[]) {
 }
 
 static void
-get_async(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED){
-
+get_async(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED)
+{
     struct ofl_msg_async_config msg =
              {{.type = OFPT_GET_ASYNC_REQUEST},
              .config = NULL};
@@ -1190,12 +1219,13 @@ usage(void)
 }
 
 static void
-parse_match(char *str, struct ofl_match_header **match) {
+parse_match(char *str, struct ofl_match_header **match)
+{
     // TODO parse masks
     char *token, *saveptr = NULL;
     struct ofl_match *m = xmalloc(sizeof(struct ofl_match));
     ofl_structs_match_init(m);
-    
+
     for (token = strtok_r(str, KEY_SEP, &saveptr); token != NULL; token = strtok_r(NULL, KEY_SEP, &saveptr)) {
          if (strncmp(token, "apply", strlen("apply")) == 0 ||
                  strncmp(token, "write", strlen("write")) == 0 ||
@@ -1639,12 +1669,13 @@ parse_match(char *str, struct ofl_match_header **match) {
         }
         ofp_fatal(0, "Error parsing match arg: %s.", token);
     }
-    
+
     (*match) = (struct ofl_match_header *)m;
 }
 
 static int
-parse_set_field(char *token, struct ofl_action_set_field *act) {
+parse_set_field(char *token, struct ofl_action_set_field *act)
+{
 
 
     if (strncmp(token, MATCH_DL_SRC KEY_VAL2, strlen(MATCH_DL_SRC KEY_VAL2)) == 0) {
@@ -2087,10 +2118,10 @@ parse_actions(char *str, size_t *acts_num, struct ofl_action_header ***acts) {
     size_t i;
     bool found;
     struct ofl_action_header *act = NULL;
-    
+
     for (token = strtok_r(str, KEY_SEP, &saveptr); token != NULL; token = strtok_r(NULL, KEY_SEP, &saveptr)) {
         found = false;
-        
+
         for (i=0; i<NUM_ELEMS(action_names); i++) {
             if (strncmp(token, action_names[i].name, strlen(action_names[i].name)) == 0) {
                 s = token + strlen(action_names[i].name);
@@ -2455,8 +2486,8 @@ parse_band_args(char *str, struct ofl_msg_meter_mod *m, struct ofl_meter_band_he
            struct ofl_meter_band_dscp_remark *d = (struct ofl_meter_band_dscp_remark*) b;
             if (parse8(token + strlen(BAND_PREC_LEVEL KEY_VAL), NULL, 0, UINT8_MAX, &d->prec_level)) {
                     ofp_fatal(0, "Error parsing band rate: %s.", token);
-            }    
-            continue;                        
+            }
+            continue;
         }
          ofp_fatal(0, "Error parsing band arg: %s.", token);
     }
@@ -2890,7 +2921,7 @@ parse_feature_prop_match(char *str, struct ofl_table_feature_prop_oxm **prop_add
 	 }
     }
 
-    property = (struct ofl_table_feature_prop_oxm *) xmalloc(sizeof(struct ofl_table_feature_prop_oxm));		
+    property = (struct ofl_table_feature_prop_oxm *) xmalloc(sizeof(struct ofl_table_feature_prop_oxm));
     property->header.type = OFPTFPT_MATCH;
     property->header.length = (sizeof(struct ofp_table_feature_prop_oxm) + oxm_num * sizeof(uint32_t));
     property->oxm_num = oxm_num;
