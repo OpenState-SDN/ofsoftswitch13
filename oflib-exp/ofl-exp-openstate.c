@@ -4,13 +4,15 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
+#include <arpa/inet.h>
 #include "openflow/openflow.h"
 #include "openflow/openstate-ext.h"
 #include "ofl-exp-openstate.h"
 #include "oflib/ofl-log.h"
 #include "oflib/ofl-print.h"
 #include "oflib/ofl-utils.h"
-#include "oflib/ofl-structs.h" 
+#include "oflib/ofl-structs.h"
 #include "oflib/oxm-match.h"
 #include "lib/hash.h"
 #include "lib/ofp.h"
@@ -24,37 +26,38 @@ OFL_LOG_INIT(LOG_MODULE)
 
 /* functions used by ofp_exp_msg_state_mod*/
 static ofl_err
-ofl_structs_stateful_table_config_unpack(struct ofp_exp_stateful_table_config *src, size_t *len, struct ofl_exp_stateful_table_config *dst) {
-    int i;
+ofl_structs_stateful_table_config_unpack(struct ofp_exp_stateful_table_config const *src, size_t *len, struct ofl_exp_stateful_table_config *dst)
+{
     if(*len == sizeof(struct ofp_exp_stateful_table_config))
     {
         if (src->table_id >= PIPELINE_TABLES) {
-            OFL_LOG_WARN(LOG_MODULE, "Received STATE_MOD message has invalid table id (%zu).", src->table_id );
+            OFL_LOG_WARN(LOG_MODULE, "Received STATE_MOD message has invalid table id (%d).", src->table_id );
             return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_TABLE_ID);
-        } 
+        }
         dst->table_id = src->table_id;
         dst->stateful = src->stateful;
     }
     else
-    { 
+    {
        OFL_LOG_WARN(LOG_MODULE, "Received state mod stateful_table is too short (%zu).", *len);
        return ofl_error(OFPET_BAD_ACTION, OFPBAC_BAD_LEN);
     }
 
     *len -= sizeof(struct ofp_exp_stateful_table_config);
- 
+
     return 0;
 }
 
 static ofl_err
-ofl_structs_extraction_unpack(struct ofp_exp_set_extractor *src, size_t *len, struct ofl_exp_set_extractor *dst) {
+ofl_structs_extraction_unpack(struct ofp_exp_set_extractor const *src, size_t *len, struct ofl_exp_set_extractor *dst)
+{
     int i;
     if(*len == ((1+ntohl(src->field_count))*sizeof(uint32_t) + 4*sizeof(uint8_t)) && (ntohl(src->field_count)>0))
     {
         if (src->table_id >= PIPELINE_TABLES) {
-            OFL_LOG_WARN(LOG_MODULE, "Received STATE_MOD message has invalid table id (%zu).", src->table_id );
+            OFL_LOG_WARN(LOG_MODULE, "Received STATE_MOD message has invalid table id (%d).", src->table_id );
             return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_TABLE_ID);
-        } 
+        }
         dst->table_id = src->table_id;
         dst->field_count=ntohl(src->field_count);
         for (i=0;i<dst->field_count;i++)
@@ -64,26 +67,27 @@ ofl_structs_extraction_unpack(struct ofp_exp_set_extractor *src, size_t *len, st
     }
     else
     { //control of struct ofp_extraction length.
-       OFL_LOG_WARN(LOG_MODULE, "Received state mod extraction is too short (%zu).", *len);       
+       OFL_LOG_WARN(LOG_MODULE, "Received state mod extraction is too short (%zu).", *len);
        return ofl_error(OFPET_BAD_ACTION, OFPBAC_BAD_LEN);
     }
 
     *len -= (((1+ntohl(src->field_count))*sizeof(uint32_t)) + 4*sizeof(uint8_t));
- 
+
     return 0;
 }
 
 static ofl_err
-ofl_structs_set_flow_state_unpack(struct ofp_exp_set_flow_state *src, size_t *len, struct ofl_exp_set_flow_state *dst) {
+ofl_structs_set_flow_state_unpack(struct ofp_exp_set_flow_state const *src, size_t *len, struct ofl_exp_set_flow_state *dst)
+{
     int i;
     uint8_t key[OFPSC_MAX_KEY_LEN] = {0};
-    
+
     if((*len == ((7*sizeof(uint32_t) + ntohl(src->key_len)*sizeof(uint8_t))) + 4*sizeof(uint8_t)) && (ntohl(src->key_len)>0))
     {
         if (src->table_id >= PIPELINE_TABLES) {
-            OFL_LOG_WARN(LOG_MODULE, "Received STATE_MOD message has invalid table id (%zu).", src->table_id );
+            OFL_LOG_WARN(LOG_MODULE, "Received STATE_MOD message has invalid table id (%d).", src->table_id );
             return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_TABLE_ID);
-        } 
+        }
         dst->table_id = src->table_id;
         dst->key_len=ntohl(src->key_len);
         dst->state=ntohl(src->state);
@@ -103,21 +107,22 @@ ofl_structs_set_flow_state_unpack(struct ofp_exp_set_flow_state *src, size_t *le
     }
 
     *len -= ((7*sizeof(uint32_t) + ntohl(src->key_len)*sizeof(uint8_t)) + 4*sizeof(uint8_t));
-    
+
     return 0;
 }
 
 static ofl_err
-ofl_structs_del_flow_state_unpack(struct ofp_exp_del_flow_state *src, size_t *len, struct ofl_exp_del_flow_state *dst) {
+ofl_structs_del_flow_state_unpack(struct ofp_exp_del_flow_state const *src, size_t *len, struct ofl_exp_del_flow_state *dst)
+{
     int i;
     uint8_t key[OFPSC_MAX_KEY_LEN] = {0};
 
     if((*len == ((sizeof(uint32_t) + ntohl(src->key_len)*sizeof(uint8_t))) + 4*sizeof(uint8_t)) && (ntohl(src->key_len)>0))
     {
         if (src->table_id >= PIPELINE_TABLES) {
-            OFL_LOG_WARN(LOG_MODULE, "Received STATE_MOD message has invalid table id (%zu).", src->table_id );
+            OFL_LOG_WARN(LOG_MODULE, "Received STATE_MOD message has invalid table id (%d).", src->table_id );
             return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_TABLE_ID);
-        } 
+        }
         dst->table_id = src->table_id;
         dst->key_len=ntohl(src->key_len);
         for (i=0;i<dst->key_len;i++)
@@ -130,14 +135,15 @@ ofl_structs_del_flow_state_unpack(struct ofp_exp_del_flow_state *src, size_t *le
        OFL_LOG_WARN(LOG_MODULE, "Received state mod del_flow is too short (%zu).", *len);
        return ofl_error(OFPET_BAD_ACTION, OFPBAC_BAD_LEN);
     }
- 
+
     *len -= ((sizeof(uint32_t) + ntohl(src->key_len)*sizeof(uint8_t)) + 4*sizeof(uint8_t));
- 
+
     return 0;
 }
 
 static ofl_err
-ofl_structs_set_global_state_unpack(struct ofp_exp_set_global_state *src, size_t *len, struct ofl_exp_set_global_state *dst) {
+ofl_structs_set_global_state_unpack(struct ofp_exp_set_global_state const *src, size_t *len, struct ofl_exp_set_global_state *dst)
+{
 
     if (*len == 2*sizeof(uint32_t)) {
         dst->flag = ntohl(src->flag);
@@ -147,14 +153,20 @@ ofl_structs_set_global_state_unpack(struct ofp_exp_set_global_state *src, size_t
         OFL_LOG_WARN(LOG_MODULE, "Received STATE_MOD set global state has invalid length (%zu).", *len);
         return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
     }
-    
+
     *len -= sizeof(struct ofp_exp_set_global_state);
 
     return 0;
 }
 
 int
-ofl_exp_openstate_msg_pack(struct ofl_msg_experimenter *msg, uint8_t **buf, size_t *buf_len) {
+ofl_exp_openstate_msg_pack(struct ofl_msg_experimenter const *msg, uint8_t **buf, size_t *buf_len)
+{
+    /* TODO */
+
+    (void)buf;
+    (void)buf_len;
+
     if (msg->experimenter_id == OPENSTATE_VENDOR_ID) {
         struct ofl_exp_openstate_msg_header *exp = (struct ofl_exp_openstate_msg_header *)msg;
         switch (exp->type) {
@@ -170,8 +182,9 @@ ofl_exp_openstate_msg_pack(struct ofl_msg_experimenter *msg, uint8_t **buf, size
 }
 
 ofl_err
-ofl_exp_openstate_msg_unpack(struct ofp_header *oh, size_t *len, struct ofl_msg_experimenter **msg) {
-    
+ofl_exp_openstate_msg_unpack(struct ofp_header const *oh, size_t *len, struct ofl_msg_experimenter **msg)
+{
+
     ofl_err error;
     struct ofp_experimenter_header *exp_header;
 
@@ -186,11 +199,11 @@ ofl_exp_openstate_msg_unpack(struct ofp_header *oh, size_t *len, struct ofl_msg_
     if (ntohl(exp_header->experimenter) == OPENSTATE_VENDOR_ID) {
 
         switch (ntohl(exp_header->exp_type)) {
-            case (OFPT_EXP_STATE_MOD): 
+            case (OFPT_EXP_STATE_MOD):
             {
                 struct ofp_exp_msg_state_mod *sm;
                 struct ofl_exp_msg_state_mod *dm;
-                
+
                 if (*len < sizeof(struct ofp_experimenter_header) + 2*sizeof(uint8_t)) {
                     OFL_LOG_WARN(LOG_MODULE, "Received STATE_MOD message has invalid length (%zu).", *len);
                     return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
@@ -204,11 +217,12 @@ ofl_exp_openstate_msg_unpack(struct ofp_header *oh, size_t *len, struct ofl_msg_
                 dm->header.header.experimenter_id = ntohl(exp_header->experimenter);
                 dm->header.type                   = ntohl(exp_header->exp_type);
                 dm->command = (enum ofp_exp_msg_state_mod_commands)sm->command;
-                
+
                 *len -= 2*sizeof(uint8_t);
 
                 if (dm->command == OFPSC_STATEFUL_TABLE_CONFIG){
-                error = ofl_structs_stateful_table_config_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
+		    error = ofl_structs_stateful_table_config_unpack((struct ofp_exp_stateful_table_config const *)&(sm->payload[0]), len,
+								     (struct ofl_exp_stateful_table_config *)&(dm->payload[0]));
                     if (error) {
                         free(dm);
                         return error;
@@ -217,7 +231,8 @@ ofl_exp_openstate_msg_unpack(struct ofp_header *oh, size_t *len, struct ofl_msg_
                 }
 
                 else if (dm->command == OFPSC_SET_L_EXTRACTOR || dm->command == OFPSC_SET_U_EXTRACTOR){
-                error = ofl_structs_extraction_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
+			error = ofl_structs_extraction_unpack((struct ofp_exp_set_extractor const *)&(sm->payload[0]), len,
+							      (struct ofl_exp_set_extractor *)&(dm->payload[0]));
                     if (error) {
                         free(dm);
                         return error;
@@ -226,25 +241,28 @@ ofl_exp_openstate_msg_unpack(struct ofp_header *oh, size_t *len, struct ofl_msg_
                 }
 
                 else if (dm->command == OFPSC_SET_FLOW_STATE){
-                error = ofl_structs_set_flow_state_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
+			error = ofl_structs_set_flow_state_unpack((struct ofp_exp_set_flow_state const *)&(sm->payload[0]), len,
+								  (struct ofl_exp_set_flow_state *)&(dm->payload[0]));
                     if (error) {
                         free(dm);
                         return error;
                     }
 
-                } 
+                }
 
                 else if (dm->command == OFPSC_DEL_FLOW_STATE){
-                error = ofl_structs_del_flow_state_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
+		    error = ofl_structs_del_flow_state_unpack((struct ofp_exp_del_flow_state const *)&(sm->payload[0]), len,
+							      (struct ofl_exp_del_flow_state *)&(dm->payload[0]));
                     if (error) {
                         free(dm);
                         return error;
                     }
 
-                }                 
+                }
 
-                else if (dm->command == OFPSC_SET_GLOBAL_STATE){
-                error = ofl_structs_set_global_state_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
+		else if (dm->command == OFPSC_SET_GLOBAL_STATE){
+			error = ofl_structs_set_global_state_unpack((struct ofp_exp_set_global_state const *)&(sm->payload[0]), len,
+								    (struct ofl_exp_set_global_state *)&(dm->payload[0]));
                     if (error) {
                         free(dm);
                         return error;
@@ -275,7 +293,8 @@ ofl_exp_openstate_msg_unpack(struct ofp_header *oh, size_t *len, struct ofl_msg_
 }
 
 int
-ofl_exp_openstate_msg_free(struct ofl_msg_experimenter *msg) {
+ofl_exp_openstate_msg_free(struct ofl_msg_experimenter *msg)
+{
     if (msg->experimenter_id == OPENSTATE_VENDOR_ID) {
         struct ofl_exp_openstate_msg_header *exp = (struct ofl_exp_openstate_msg_header *)msg;
         switch (exp->type) {
@@ -290,8 +309,10 @@ ofl_exp_openstate_msg_free(struct ofl_msg_experimenter *msg) {
     return 0;
 }
 
+
 char *
-ofl_exp_openstate_msg_to_string(struct ofl_msg_experimenter *msg) {
+ofl_exp_openstate_msg_to_string(struct ofl_msg_experimenter const *msg)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -316,22 +337,24 @@ ofl_exp_openstate_msg_to_string(struct ofl_msg_experimenter *msg) {
 /*experimenter action functions*/
 
 ofl_err
-ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct ofl_action_header **dst) {
+ofl_exp_openstate_act_unpack(struct ofp_action_header const *src, size_t *len, struct ofl_action_header **dst)
+{
+
+    struct ofp_action_experimenter_header const *exp;
 
     if (*len < sizeof(struct ofp_action_experimenter_header)) {
         OFL_LOG_WARN(LOG_MODULE, "Received EXPERIMENTER action has invalid length (%zu).", *len);
         return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
     }
 
-    struct ofp_action_experimenter_header *exp;
-    exp = (struct ofp_action_experimenter_header *)src;
+    exp = (struct ofp_action_experimenter_header const *)src;
 
     if (ntohl(exp->experimenter) == OPENSTATE_VENDOR_ID) {
         struct ofp_openstate_action_experimenter_header *ext;
         ext = (struct ofp_openstate_action_experimenter_header *)exp;
 
         switch (ntohl(ext->act_type)) {
-            case (OFPAT_EXP_SET_STATE): 
+            case (OFPAT_EXP_SET_STATE):
             {
                 struct ofp_exp_action_set_state *sa;
                 struct ofl_exp_action_set_state *da;
@@ -365,10 +388,10 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
 
                 *dst = (struct ofl_action_header *)da;
                 *len -= sizeof(struct ofp_exp_action_set_state);
-                break; 
+                break;
             }
 
-            case (OFPAT_EXP_SET_FLAG): 
+            case (OFPAT_EXP_SET_FLAG):
             {
                 struct ofp_exp_action_set_flag *sa;
                 struct ofl_exp_action_set_flag *da;
@@ -386,10 +409,10 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
 
                 *dst = (struct ofl_action_header *)da;
                 *len -= sizeof(struct ofp_exp_action_set_flag);
-                break; 
+                break;
             }
 
-            default: 
+            default:
             {
                 OFL_LOG_WARN(LOG_MODULE, "Trying to unpack unknown Openstate Experimenter action.");
                 return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_EXPERIMENTER);
@@ -399,11 +422,11 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
     return 0;
 }
 
-int 
-ofl_exp_openstate_act_pack(struct ofl_action_header *src, struct ofp_action_header *dst){
-    
+int
+ofl_exp_openstate_act_pack(struct ofl_action_header const *src, struct ofp_action_header *dst)
+{
     struct ofl_action_experimenter* exp = (struct ofl_action_experimenter *) src;
-    
+
     if (exp->experimenter_id == OPENSTATE_VENDOR_ID) {
         struct ofl_exp_openstate_act_header *ext = (struct ofl_exp_openstate_act_header *)exp;
         switch (ext->act_type) {
@@ -428,7 +451,7 @@ ofl_exp_openstate_act_pack(struct ofl_action_header *src, struct ofp_action_head
 
                 return sizeof(struct ofp_exp_action_set_state);
             }
-            case (OFPAT_EXP_SET_FLAG): 
+            case (OFPAT_EXP_SET_FLAG):
             {
                 struct ofl_exp_action_set_flag *sa = (struct ofl_exp_action_set_flag *) ext;
                 struct ofp_exp_action_set_flag *da = (struct ofp_exp_action_set_flag *) dst;
@@ -446,10 +469,12 @@ ofl_exp_openstate_act_pack(struct ofl_action_header *src, struct ofp_action_head
                 return 0;
         }
     }
+
+    return 0;
 }
 
 size_t
-ofl_exp_openstate_act_ofp_len(struct ofl_action_header *act)
+ofl_exp_openstate_act_ofp_len(struct ofl_action_header const *act)
 {
     struct ofl_action_experimenter* exp = (struct ofl_action_experimenter *) act;
     if (exp->experimenter_id == OPENSTATE_VENDOR_ID) {
@@ -461,18 +486,20 @@ ofl_exp_openstate_act_ofp_len(struct ofl_action_header *act)
 
             case (OFPAT_EXP_SET_FLAG):
                 return sizeof(struct ofp_exp_action_set_flag);
-
             default:
                 return 0;
         }
     }
+
+    return 0;
 }
 
+
 char *
-ofl_exp_openstate_act_to_string(struct ofl_action_header *act)
+ofl_exp_openstate_act_to_string(struct ofl_action_header const *act)
 {
     struct ofl_action_experimenter* exp = (struct ofl_action_experimenter *) act;
-    
+
     if (exp->experimenter_id == OPENSTATE_VENDOR_ID) {
         struct ofl_exp_openstate_act_header *ext = (struct ofl_exp_openstate_act_header *)exp;
         switch (ext->act_type) {
@@ -482,9 +509,8 @@ ofl_exp_openstate_act_to_string(struct ofl_action_header *act)
                 char *string = malloc(200);
                 sprintf(string, "{set_state=[state=\"%u\",state_mask=\"%"PRIu32"\",table_id=\"%u\",idle_to=\"%u\",hard_to=\"%u\",idle_rb=\"%u\",hard_rb=\"%u\"]}", a->state, a->state_mask, a->table_id,a->idle_timeout,a->hard_timeout,a->idle_rollback,a->hard_rollback);
                 return string;
-                break;
             }
-            case (OFPAT_EXP_SET_FLAG): 
+            case (OFPAT_EXP_SET_FLAG):
             {
                 struct ofl_exp_action_set_flag *a = (struct ofl_exp_action_set_flag *)ext;
                 char *string = malloc(100);
@@ -492,14 +518,17 @@ ofl_exp_openstate_act_to_string(struct ofl_action_header *act)
                 masked_value_print(string_value,decimal_to_binary(a->flag),decimal_to_binary(a->flag_mask));
                 sprintf(string, "{set_flag=[flag=%s]}", string_value);
                 return string;
-                break;
             }
         }
     }
+
+    return strdup("openstate_act: unexpected parameter");
 }
 
-int     
-ofl_exp_openstate_act_free(struct ofl_action_header *act){
+
+int
+ofl_exp_openstate_act_free(struct ofl_action_header *act)
+{
 
     struct ofl_action_experimenter* exp = (struct ofl_action_experimenter *) act;
     struct ofl_exp_openstate_act_header *ext = (struct ofl_exp_openstate_act_header *)exp;
@@ -509,23 +538,23 @@ ofl_exp_openstate_act_free(struct ofl_action_header *act){
             {
                 struct ofl_exp_action_set_state *a = (struct ofl_exp_action_set_state *)ext;
                 free(a);
-                return;
-                break;
+                return 0;
             }
             case (OFPAT_EXP_SET_FLAG):
             {
                 struct ofl_exp_action_set_flag *a = (struct ofl_exp_action_set_flag *)ext;
                 free(a);
-                return;
-                break;
+                return 0;
             }
         }
     }
     free(act);
+    return 0;
 }
 
 int
-ofl_exp_openstate_stats_req_pack(struct ofl_msg_multipart_request_experimenter *ext, uint8_t **buf, size_t *buf_len, struct ofl_exp *exp) { 
+ofl_exp_openstate_stats_req_pack(struct ofl_msg_multipart_request_experimenter const *ext, uint8_t **buf, size_t *buf_len, struct ofl_exp const *exp)
+{
     struct ofl_exp_openstate_msg_multipart_request *e = (struct ofl_exp_openstate_msg_multipart_request *)ext;
     switch (e->type){
         case (OFPMP_EXP_STATE_STATS):
@@ -554,11 +583,12 @@ ofl_exp_openstate_stats_req_pack(struct ofl_msg_multipart_request_experimenter *
         }
         case (OFPMP_EXP_FLAGS_STATS):
         {
-            struct ofl_exp_msg_multipart_request_global_state *msg = (struct ofl_exp_msg_multipart_request_global_state *)e;           
+            // FIXME
+            // struct ofl_exp_msg_multipart_request_global_state *msg = (struct ofl_exp_msg_multipart_request_global_state *)e;
             struct ofp_multipart_request *req;
             struct ofp_exp_global_state_stats_request *stats;
             struct ofp_experimenter_stats_header *exp_header;
-            uint8_t *ptr;
+
             *buf_len = sizeof(struct ofp_multipart_request) + sizeof(struct ofp_exp_global_state_stats_request);
             *buf     = (uint8_t *)malloc(*buf_len);
 
@@ -578,13 +608,15 @@ ofl_exp_openstate_stats_req_pack(struct ofl_msg_multipart_request_experimenter *
 
 
 int
-ofl_exp_openstate_stats_reply_pack(struct ofl_msg_multipart_reply_experimenter *ext, uint8_t **buf, size_t *buf_len, struct ofl_exp *exp) { 
+ofl_exp_openstate_stats_reply_pack(struct ofl_msg_multipart_reply_experimenter const *ext, uint8_t **buf, size_t *buf_len, struct ofl_exp const *exp)
+{
 
     struct ofl_exp_openstate_msg_multipart_reply *e = (struct ofl_exp_openstate_msg_multipart_reply *)ext;
     switch (e->type){
         case (OFPMP_EXP_STATE_STATS):
         {
             struct ofl_exp_msg_multipart_reply_state *msg = (struct ofl_exp_msg_multipart_reply_state *)e;
+            struct ofp_experimenter_stats_header *ext_header;
             struct ofp_multipart_reply *resp;
             size_t i;
             uint8_t * data;
@@ -593,7 +625,8 @@ ofl_exp_openstate_stats_reply_pack(struct ofl_msg_multipart_reply_experimenter *
             *buf     = (uint8_t *)malloc(*buf_len);
             resp = (struct ofp_multipart_reply *)(*buf);
             data = (uint8_t*) resp->body;
-            struct ofp_experimenter_stats_header *ext_header = (struct ofp_experimenter_stats_header*) data;   
+            ext_header = (struct ofp_experimenter_stats_header*) data;
+
             ext_header->experimenter = htonl(OPENSTATE_VENDOR_ID);
             ext_header->exp_type = htonl(OFPMP_EXP_STATE_STATS);
             data += sizeof(struct ofp_experimenter_stats_header);
@@ -611,7 +644,7 @@ ofl_exp_openstate_stats_reply_pack(struct ofl_msg_multipart_reply_experimenter *
 
             *buf_len = sizeof(struct ofp_multipart_reply) + sizeof(struct ofp_exp_global_state_stats);
             *buf     = (uint8_t *)malloc(*buf_len);
-            
+
             resp = (struct ofp_multipart_reply *)(*buf);
             stats = (struct ofp_exp_global_state_stats *)resp->body;
             exp_header = (struct ofp_experimenter_stats_header *)stats;
@@ -628,12 +661,13 @@ ofl_exp_openstate_stats_reply_pack(struct ofl_msg_multipart_reply_experimenter *
 }
 
 ofl_err
-ofl_exp_openstate_stats_req_unpack(struct ofp_multipart_request *os, uint8_t* buf, size_t *len, struct ofl_msg_multipart_request_header **msg, struct ofl_exp *exp) {
-    
-    struct ofp_experimenter_stats_header *ext = (struct ofp_experimenter_stats_header *)os->body;    
+ofl_exp_openstate_stats_req_unpack(struct ofp_multipart_request const *os, uint8_t const* buf, size_t *len, struct ofl_msg_multipart_request_header **msg, struct ofl_exp const *exp)
+{
+
+    struct ofp_experimenter_stats_header *ext = (struct ofp_experimenter_stats_header *)os->body;
     switch (ntohl(ext->exp_type)){
         case (OFPMP_EXP_STATE_STATS):
-        {    
+        {
             struct ofp_exp_state_stats_request *sm;
             struct ofl_exp_msg_multipart_request_state *dm;
             ofl_err error = 0;
@@ -686,20 +720,23 @@ ofl_exp_openstate_stats_req_unpack(struct ofp_multipart_request *os, uint8_t* bu
 }
 
 ofl_err
-ofl_exp_openstate_stats_reply_unpack(struct ofp_multipart_reply *os, uint8_t* buf, size_t *len, struct ofl_msg_multipart_reply_header **msg, struct ofl_exp *exp) {
+ofl_exp_openstate_stats_reply_unpack(struct ofp_multipart_reply const *os, uint8_t const* buf, size_t *len, struct ofl_msg_multipart_reply_header **msg, struct ofl_exp const *exp)
+{
 
     struct ofp_experimenter_stats_header *ext = (struct ofp_experimenter_stats_header *)os->body;
-    
+
     switch (ntohl(ext->exp_type)){
         case (OFPMP_EXP_STATE_STATS):
-        {    
+        {
             struct ofp_exp_state_stats *stat;
             struct ofl_exp_msg_multipart_reply_state *dm;
             ofl_err error;
             size_t i, ini_len;
-            uint8_t *ptr;
+            uint8_t const *ptr;
 
             // ofp_multipart_reply was already checked and subtracted in unpack_multipart_reply
+            //
+
             stat = (struct ofp_exp_state_stats *) (os->body + sizeof(struct ofp_experimenter_stats_header));
             dm = (struct ofl_exp_msg_multipart_reply_state *)malloc(sizeof(struct ofl_exp_msg_multipart_reply_state));
             dm->header.type = ntohl(ext->exp_type);
@@ -722,10 +759,13 @@ ofl_exp_openstate_stats_reply_unpack(struct ofp_multipart_reply *os, uint8_t* bu
                     free (dm);
                     return error;
                 }
-                stat = (struct ofp_state_stats *)((uint8_t *)stat + ntohs(stat->length));
+
+		// FIXME
+                stat = (struct ofp_exp_state_stats *)((uint8_t *)stat + ntohs(stat->length));
             }
 
-            *msg = (struct ofl_msg_multipart_request_header *)dm;
+	    // FIXME
+            *msg = (struct ofl_msg_multipart_reply_header *)dm;
             return 0;
         }
         case (OFPMP_EXP_FLAGS_STATS):
@@ -745,7 +785,8 @@ ofl_exp_openstate_stats_reply_unpack(struct ofp_multipart_reply *os, uint8_t* bu
             dm->header.header.experimenter_id = ntohl(ext->experimenter);
             dm->global_states =  ntohl(sm->global_states);
 
-            *msg = (struct ofl_msg_multipart_request_header *)dm;
+	    // FIXME
+            *msg = (struct ofl_msg_multipart_reply_header *)dm;
             return 0;
         }
         default:
@@ -753,9 +794,11 @@ ofl_exp_openstate_stats_reply_unpack(struct ofp_multipart_reply *os, uint8_t* bu
     }
 }
 
+
 char *
-ofl_exp_openstate_stats_request_to_string(struct ofl_msg_multipart_request_experimenter *ext, struct ofl_exp *exp) {
-    struct ofl_exp_openstate_msg_multipart_request *e = (struct ofl_exp_openstate_msg_multipart_request *)ext; 
+ofl_exp_openstate_stats_request_to_string(struct ofl_msg_multipart_request_experimenter *ext, struct ofl_exp const *exp)
+{
+    struct ofl_exp_openstate_msg_multipart_request *e = (struct ofl_exp_openstate_msg_multipart_request *)ext;
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -768,17 +811,20 @@ ofl_exp_openstate_stats_request_to_string(struct ofl_msg_multipart_request_exper
             fprintf(stream, "\", table=\"");
             ofl_table_print(stream, msg->table_id);
             if(msg->get_from_state)
-                fprintf(stream, "\", state=\"%lu\"", msg->state);
+                fprintf(stream, "\", state=\"%u\"", msg->state);
             fprintf(stream, "\", match=");
             ofl_structs_match_print(stream, msg->match, exp);
             break;
         }
         case (OFPMP_EXP_FLAGS_STATS):
         {
+            // FIXME!!!
+            struct ofl_exp_msg_multipart_request_global_state *msg;
             fprintf(stream, "{stat_exp_type=\"");
             ofl_exp_stats_type_print(stream, e->type);
             fprintf(stream, "\"");
-            struct ofl_exp_msg_multipart_request_global_state *msg = (struct ofl_exp_msg_multipart_request_global_state *)e;
+            // FIXME!
+            msg = (struct ofl_exp_msg_multipart_request_global_state *)e;
             break;
         }
     }
@@ -786,9 +832,11 @@ ofl_exp_openstate_stats_request_to_string(struct ofl_msg_multipart_request_exper
     return str;
 }
 
+
 char *
-ofl_exp_openstate_stats_reply_to_string(struct ofl_msg_multipart_reply_experimenter *ext, struct ofl_exp *exp) {
-    struct ofl_exp_openstate_msg_multipart_reply *e = (struct ofl_exp_openstate_msg_multipart_reply *)ext; 
+ofl_exp_openstate_stats_reply_to_string(struct ofl_msg_multipart_reply_experimenter *ext, struct ofl_exp const *exp)
+{
+    struct ofl_exp_openstate_msg_multipart_reply *e = (struct ofl_exp_openstate_msg_multipart_reply *)ext;
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -802,14 +850,14 @@ ofl_exp_openstate_stats_reply_to_string(struct ofl_msg_multipart_reply_experimen
             fprintf(stream, "{exp_type=\"");
             ofl_exp_stats_type_print(stream, e->type);
             fprintf(stream, "\", stats=[");
-            
+
             for (i=0; i<msg->stats_num; i++) {
 
                 if(last_table_id != msg->stats[i]->table_id && colors)
                     fprintf(stream, "\n\n\x1B[33mTABLE = %d\x1B[0m\n\n",msg->stats[i]->table_id);
                 last_table_id = msg->stats[i]->table_id;
                 ofl_structs_state_stats_print(stream, msg->stats[i], exp);
-                if (i < msg->stats_num - 1) { 
+                if (i < msg->stats_num - 1) {
                     if(colors)
                         fprintf(stream, ",\n\n");
                     else
@@ -823,8 +871,10 @@ ofl_exp_openstate_stats_reply_to_string(struct ofl_msg_multipart_reply_experimen
         case (OFPMP_EXP_FLAGS_STATS):
         {
             struct ofl_exp_msg_multipart_reply_global_state *msg = (struct ofl_exp_msg_multipart_reply_global_state *)e;
-            size_t i;
-            size_t last_table_id = -1;
+            // FIXME
+            // size_t last_table_id = -1;
+            // size_t i;
+
             extern int colors;
             fprintf(stream, "{stat_exp_type=\"");
             ofl_exp_stats_type_print(stream, e->type);
@@ -837,7 +887,8 @@ ofl_exp_openstate_stats_reply_to_string(struct ofl_msg_multipart_reply_experimen
 }
 
 int
-ofl_exp_openstate_stats_req_free(struct ofl_msg_multipart_request_header *msg) {
+ofl_exp_openstate_stats_req_free(struct ofl_msg_multipart_request_header *msg)
+{
     struct ofl_msg_multipart_request_experimenter* exp = (struct ofl_msg_multipart_request_experimenter *) msg;
     struct ofl_exp_openstate_msg_multipart_request *ext = (struct ofl_exp_openstate_msg_multipart_request *)exp;
     switch (ext->type) {
@@ -849,7 +900,7 @@ ofl_exp_openstate_stats_req_free(struct ofl_msg_multipart_request_header *msg) {
         }
         case (OFPMP_EXP_FLAGS_STATS):
         {
-            struct ofl_exp_msg_multipart_request_state *a = (struct ofl_exp_msg_multipart_reqeust_state *) ext;
+            struct ofl_exp_msg_multipart_request_state *a = (struct ofl_exp_msg_multipart_request_state *) ext;
             free(a);
             break;
         }
@@ -861,7 +912,8 @@ ofl_exp_openstate_stats_req_free(struct ofl_msg_multipart_request_header *msg) {
 }
 
 int
-ofl_exp_openstate_stats_reply_free(struct ofl_msg_multipart_reply_header *msg) {
+ofl_exp_openstate_stats_reply_free(struct ofl_msg_multipart_reply_header *msg)
+{
     struct ofl_msg_multipart_reply_experimenter* exp = (struct ofl_msg_multipart_reply_experimenter *) msg;
     struct ofl_exp_openstate_msg_multipart_reply *ext = (struct ofl_exp_openstate_msg_multipart_reply *)exp;
     switch (ext->type) {
@@ -952,11 +1004,16 @@ oxm_put_exp_64w(struct ofpbuf *buf, uint32_t header, uint32_t experimenter_id, u
 {
     oxm_put_exp_header(buf, header, experimenter_id);
     ofpbuf_put(buf, &value, sizeof value);
-    ofpbuf_put(buf, &mask, sizeof mask); 
+    ofpbuf_put(buf, &mask, sizeof mask);
 }
 
+
+
 int
-ofl_exp_openstate_field_unpack(struct ofl_match *match, struct oxm_field *f, void *experimenter_id, void *value, void *mask) {
+ofl_exp_openstate_field_unpack(struct ofl_match *match, struct oxm_field const *f, void const *experimenter_id, void const *value, void const *mask)
+{
+    // FIXME!!!
+    //
     switch (f->index) {
         case OFI_OXM_EXP_STATE:{
             ofl_structs_match_exp_put32(match, f->header, ntohl(*((uint32_t*) experimenter_id)), ntohl(*((uint32_t*) value)));
@@ -985,12 +1042,14 @@ ofl_exp_openstate_field_unpack(struct ofl_match *match, struct oxm_field *f, voi
     }
 }
 
-void  
-ofl_exp_openstate_field_pack(struct ofpbuf *buf, struct ofl_match_tlv *oft){
-    uint8_t length = OXM_LENGTH(oft->header);          
+
+void
+ofl_exp_openstate_field_pack(struct ofpbuf *buf, struct ofl_match_tlv const *oft)
+{
+    uint8_t length = OXM_LENGTH(oft->header);
     bool has_mask =false;
 
-    length = length - EXP_ID_LEN;      /* field length should exclude experimenter_id */                
+    length = length - EXP_ID_LEN;      /* field length should exclude experimenter_id */
     if (OXM_HASMASK(oft->header)){
         length = length / 2;
         has_mask = true;
@@ -1055,7 +1114,8 @@ ofl_exp_openstate_field_pack(struct ofpbuf *buf, struct ofl_match_tlv *oft){
 }
 
 void
-ofl_exp_openstate_field_match(struct ofl_match_tlv *f, int *packet_header, int *field_len, uint8_t **flow_val, uint8_t **flow_mask){
+ofl_exp_openstate_field_match(struct ofl_match_tlv *f, int *packet_header, int *field_len, uint8_t **flow_val, uint8_t **flow_mask)
+{
     bool has_mask = OXM_HASMASK(f->header);
     (*field_len) = (OXM_LENGTH(f->header) - EXP_ID_LEN);
     *flow_val = f->value + EXP_ID_LEN;
@@ -1069,12 +1129,15 @@ ofl_exp_openstate_field_match(struct ofl_match_tlv *f, int *packet_header, int *
 }
 
 void
-ofl_exp_openstate_field_compare (struct ofl_match_tlv *packet_f, uint8_t **packet_val){
+ofl_exp_openstate_field_compare (struct ofl_match_tlv *packet_f, uint8_t **packet_val)
+{
     *packet_val = packet_f->value + EXP_ID_LEN;
-}                   
+}
 
+// FIXME?
 void
-ofl_exp_openstate_field_match_std (struct ofl_match_tlv *flow_mod_match, struct ofl_match_tlv *flow_entry_match, int *field_len, uint8_t **flow_mod_val, uint8_t **flow_entry_val, uint8_t **flow_mod_mask, uint8_t **flow_entry_mask){
+ofl_exp_openstate_field_match_std (struct ofl_match_tlv *flow_mod_match, struct ofl_match_tlv *flow_entry_match UNUSED, int *field_len, uint8_t **flow_mod_val, uint8_t **flow_entry_val, uint8_t **flow_mod_mask, uint8_t **flow_entry_mask)
+{
     bool has_mask = OXM_HASMASK(flow_mod_match->header);
     *field_len =  OXM_LENGTH(flow_mod_match->header) - EXP_ID_LEN;
     *flow_mod_val = ((*flow_mod_val) + EXP_ID_LEN);
@@ -1088,8 +1151,9 @@ ofl_exp_openstate_field_match_std (struct ofl_match_tlv *flow_mod_match, struct 
 }
 
 void
-ofl_exp_openstate_field_overlap_a (struct ofl_match_tlv *f_a, int *field_len, uint8_t **val_a, uint8_t **mask_a, int *header, int *header_m, uint64_t *all_mask){
-    *field_len = OXM_LENGTH(f_a->header) - EXP_ID_LEN; 
+ofl_exp_openstate_field_overlap_a (struct ofl_match_tlv *f_a, int *field_len, uint8_t **val_a, uint8_t **mask_a, int *header, int *header_m, uint64_t *all_mask)
+{
+    *field_len = OXM_LENGTH(f_a->header) - EXP_ID_LEN;
     *val_a = f_a->value + EXP_ID_LEN;
     if (OXM_HASMASK(f_a->header)) {
         *field_len /= 2;
@@ -1105,7 +1169,8 @@ ofl_exp_openstate_field_overlap_a (struct ofl_match_tlv *f_a, int *field_len, ui
 }
 
 void
-ofl_exp_openstate_field_overlap_b (struct ofl_match_tlv *f_b, int *field_len, uint8_t **val_b, uint8_t **mask_b, uint64_t *all_mask){
+ofl_exp_openstate_field_overlap_b (struct ofl_match_tlv *f_b, int *field_len, uint8_t **val_b, uint8_t **mask_b, uint64_t *all_mask)
+{
     *val_b = f_b->value + EXP_ID_LEN;
     if (OXM_HASMASK(f_b->header)) {
         *mask_b = f_b->value + EXP_ID_LEN + (*field_len);
@@ -1119,10 +1184,11 @@ ofl_exp_openstate_field_overlap_b (struct ofl_match_tlv *f_b, int *field_len, ui
 
 int __extract_key(uint8_t *, struct key_extractor *, struct packet *);
 
-struct state_table * state_table_create(void) {
+struct state_table * state_table_create(void)
+{
     struct state_table *table = malloc(sizeof(struct state_table));
     memset(table, 0, sizeof(*table));
-     
+
     table->state_entries = (struct hmap) HMAP_INITIALIZER(&table->state_entries);
     table->hard_entries = (struct hmap) HMAP_INITIALIZER(&table->hard_entries);
     table->idle_entries = (struct hmap) HMAP_INITIALIZER(&table->idle_entries);
@@ -1131,36 +1197,42 @@ struct state_table * state_table_create(void) {
     table->default_state_entry.state = STATE_DEFAULT;
 
     table->stateful = 0;
-    
+
     return table;
 }
 
-uint8_t state_table_is_stateful(struct state_table *table){
+uint8_t state_table_is_stateful(struct state_table *table)
+{
     return table->stateful;
 }
 
-uint8_t state_table_is_configured(struct state_table *table){
+bool state_table_is_configured(struct state_table *table)
+{
     if (table->read_key.field_count!=0 && table->write_key.field_count!=0)
         return 1;
-
     return 0;
 }
 
-void state_table_configure_stateful(struct state_table *table, uint8_t stateful){
+static void
+state_table_configure_stateful(struct state_table *table, uint8_t stateful)
+{
     if (stateful!=0)
         table->stateful = 1;
     else
         table->stateful = 0;
 }
 
-void state_table_destroy(struct state_table *table) {
+void state_table_destroy(struct state_table *table)
+{
     hmap_destroy(&table->state_entries);
     hmap_destroy(&table->hard_entries);
     hmap_destroy(&table->idle_entries);
     free(table);
 }
-/* having the key extractor field goes to look for these key inside the packet and map to corresponding value and copy the value into buf. */ 
-int __extract_key(uint8_t *buf, struct key_extractor *extractor, struct packet *pkt) {
+
+/* having the key extractor field goes to look for these key inside the packet and map to corresponding value and copy the value into buf. */
+int __extract_key(uint8_t *buf, struct key_extractor *extractor, struct packet *pkt)
+{
     int i, extracted_key_len=0, expected_key_len=0;
     struct ofl_match_tlv *f;
 
@@ -1173,7 +1245,7 @@ int __extract_key(uint8_t *buf, struct key_extractor *extractor, struct packet *
                     extracted_key_len = extracted_key_len + OXM_LENGTH(f->header);//keeps only 8 last bits of oxm_header that contains oxm_length(in which length of oxm_payload)
                     break;
                 }
-        }   
+        }
         expected_key_len = expected_key_len + OXM_LENGTH(type);
     }
     /* check if the full key has been extracted: if key is extracted partially or not at all, we cannot access the state table */
@@ -1184,21 +1256,23 @@ int __extract_key(uint8_t *buf, struct key_extractor *extractor, struct packet *
 }
 
 static bool
-state_entry_idle_timeout(struct state_table *table, struct state_entry *entry) {
+state_entry_idle_timeout(struct state_table *table, struct state_entry *entry)
+{
     bool timeout;
-    int found = 0;
-    struct state_entry *e;
+    // FIXME
+    // int found = 0;
+    // struct state_entry *e;
     struct timeval tv;
     gettimeofday(&tv,NULL);
 
     timeout = (entry->stats->idle_timeout != 0) &&
               (1000000 * tv.tv_sec + tv.tv_usec > entry->last_used + entry->stats->idle_timeout);
-       
+
     if (timeout) {
         hmap_remove_and_shrink(&table->idle_entries, &entry->idle_node);
         if(entry->stats->hard_timeout > 0)
             hmap_remove_and_shrink(&table->hard_entries, &entry->hard_node);
-        
+
 
         if(entry->stats->idle_rollback == STATE_DEFAULT){
             hmap_remove_and_shrink(&table->state_entries, &entry->hmap_node);
@@ -1217,20 +1291,22 @@ state_entry_idle_timeout(struct state_table *table, struct state_entry *entry) {
 }
 
 static bool
-state_entry_hard_timeout(struct state_table *table, struct state_entry *entry) {
+state_entry_hard_timeout(struct state_table *table, struct state_entry *entry)
+{
     bool timeout;
-    int found = 0;
-    struct state_entry *e;
+    // FIXME
+    // int found = 0;
+    // struct state_entry *e;
     struct timeval tv;
     gettimeofday(&tv,NULL);
-    
+
     timeout = (entry->remove_at != 0) && (1000000 * tv.tv_sec + tv.tv_usec > entry->remove_at);
-    
+
     if (timeout) {
         hmap_remove_and_shrink(&table->hard_entries, &entry->hard_node);
         if(entry->stats->idle_timeout > 0)
             hmap_remove_and_shrink(&table->idle_entries, &entry->idle_node);
-        
+
         if(entry->stats->hard_rollback == STATE_DEFAULT){
             hmap_remove_and_shrink(&table->state_entries, &entry->hmap_node);
             entry->state = entry->stats->hard_rollback;
@@ -1249,7 +1325,8 @@ state_entry_hard_timeout(struct state_table *table, struct state_entry *entry) {
 }
 
 void
-state_table_timeout(struct state_table *table) {
+state_table_timeout(struct state_table *table)
+{
     struct state_entry *entry;
 
     /* NOTE: hard timeout entries are ordered by the time they should be removed at,
@@ -1264,8 +1341,10 @@ state_table_timeout(struct state_table *table) {
 }
 
 /*having the read_key, look for the state vaule inside the state_table */
-struct state_entry * state_table_lookup(struct state_table* table, struct packet *pkt) {
-    struct state_entry * e = NULL;  
+
+struct state_entry * state_table_lookup(struct state_table* table, struct packet *pkt)
+{
+    struct state_entry * e = NULL;
     uint8_t key[MAX_STATE_KEY_LEN] = {0};
     struct timeval tv;
 
@@ -1274,8 +1353,8 @@ struct state_entry * state_table_lookup(struct state_table* table, struct packet
         OFL_LOG_WARN(LOG_MODULE, "lookup key fields not found in the packet's header -> NULL");
         return NULL;
     }
-    
-    HMAP_FOR_EACH_WITH_HASH(e, struct state_entry, 
+
+    HMAP_FOR_EACH_WITH_HASH(e, struct state_entry,
         hmap_node, hash_bytes(key, MAX_STATE_KEY_LEN, 0), &table->state_entries){
             if (!memcmp(key, e->key, MAX_STATE_KEY_LEN)){
                 OFL_LOG_WARN(LOG_MODULE, "found corresponding state %u",e->state);
@@ -1283,13 +1362,13 @@ struct state_entry * state_table_lookup(struct state_table* table, struct packet
                 //check if the hard_timeout of matched state entry has expired
                 if ((e->stats->hard_timeout>0) && state_entry_hard_timeout(table,e)) {
                     if (e->state==STATE_DEFAULT)
-                        e == NULL;
+                        e = NULL;
                     break;
                 }
                 //check if the idle_timeout of matched state entry has expired
                 if ((e->stats->idle_timeout>0) && state_entry_idle_timeout(table,e)) {
                     if (e->state==STATE_DEFAULT)
-                        e == NULL;
+                        e = NULL;
                     break;
                 }
                 gettimeofday(&tv,NULL);
@@ -1299,24 +1378,29 @@ struct state_entry * state_table_lookup(struct state_table* table, struct packet
     }
 
     if (e == NULL)
-    {    
+    {
         OFL_LOG_WARN(LOG_MODULE, "not found the corresponding state value\n");
         return &table->default_state_entry;
     }
-    else 
+    else
         return e;
 }
+
 /* having the state value  */
-void state_table_write_state(struct state_entry *entry, struct packet *pkt) {
+
+void state_table_write_state(struct state_entry *entry, struct packet *pkt)
+{
     struct  ofl_match_tlv *f;
-    
-    HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv, 
+
+    HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv,
         hmap_node, hash_int(OXM_EXP_STATE,0), &pkt->handle_std->match.match_fields){
-                int32_t *state = (uint32_t*) (f->value + EXP_ID_LEN);
+                uint32_t *state = (uint32_t*) (f->value + EXP_ID_LEN);
                 *state = (*state & 0x00000000) | (entry->state);
     }
 }
-void state_table_del_state(struct state_table *table, uint8_t *key, uint32_t len) {
+
+void state_table_del_state(struct state_table *table, uint8_t *key, uint32_t len)
+{
     struct state_entry *e;
 
     int i;
@@ -1331,8 +1415,8 @@ void state_table_del_state(struct state_table *table, uint8_t *key, uint32_t len
         OFL_LOG_WARN(LOG_MODULE, "key extractor length != received key length");
         return;
     }
-    
-    HMAP_FOR_EACH_WITH_HASH(e, struct state_entry, 
+
+    HMAP_FOR_EACH_WITH_HASH(e, struct state_entry,
         hmap_node, hash_bytes(key, MAX_STATE_KEY_LEN, 0), &table->state_entries){
             if (!memcmp(key, e->key, MAX_STATE_KEY_LEN)){
                 hmap_remove_and_shrink(&table->state_entries, &e->hmap_node);
@@ -1340,7 +1424,7 @@ void state_table_del_state(struct state_table *table, uint8_t *key, uint32_t len
             }
     }
 
-    HMAP_FOR_EACH_WITH_HASH(e, struct state_entry, 
+    HMAP_FOR_EACH_WITH_HASH(e, struct state_entry,
         hard_node, hash_bytes(key, MAX_STATE_KEY_LEN, 0), &table->hard_entries){
             if (!memcmp(key, e->key, MAX_STATE_KEY_LEN)){
                 hmap_remove_and_shrink(&table->hard_entries, &e->hard_node);
@@ -1348,7 +1432,7 @@ void state_table_del_state(struct state_table *table, uint8_t *key, uint32_t len
             }
     }
 
-    HMAP_FOR_EACH_WITH_HASH(e, struct state_entry, 
+    HMAP_FOR_EACH_WITH_HASH(e, struct state_entry,
         idle_node, hash_bytes(key, MAX_STATE_KEY_LEN, 0), &table->idle_entries){
             if (!memcmp(key, e->key, MAX_STATE_KEY_LEN)){
                 hmap_remove_and_shrink(&table->idle_entries, &e->idle_node);
@@ -1358,7 +1442,8 @@ void state_table_del_state(struct state_table *table, uint8_t *key, uint32_t len
 }
 
 
-void state_table_set_extractor(struct state_table *table, struct key_extractor *ke, int update) {
+void state_table_set_extractor(struct state_table *table, struct key_extractor *ke, int update)
+{
     struct key_extractor *dest;
     if (update){
         if (table->read_key.field_count!=0){
@@ -1385,26 +1470,28 @@ void state_table_set_extractor(struct state_table *table, struct key_extractor *
     return;
 }
 
-void state_table_set_state(struct state_table *table, struct packet *pkt, struct ofl_exp_set_flow_state *msg, struct ofl_exp_action_set_state *act) {
-    uint8_t key[MAX_STATE_KEY_LEN] = {0};   
+void state_table_set_state(struct state_table *table, struct packet *pkt, struct ofl_exp_set_flow_state *msg, struct ofl_exp_action_set_state *act)
+{
+    uint8_t key[MAX_STATE_KEY_LEN] = {0};
     struct state_entry *e;
-    uint32_t state,state_mask;
-    uint32_t idle_rollback,hard_rollback;
-    uint32_t idle_timeout,hard_timeout;
+    uint32_t state = 0, state_mask = 0;
+    uint32_t idle_rollback = 0, hard_rollback = 0;
+    uint32_t idle_timeout = 0, hard_timeout = 0;
     uint64_t now;
     struct timeval tv;
-    
-    int i;
+
     uint32_t key_len=0; //update-scope key extractor length
     struct key_extractor *extractor=&table->write_key;
-    for (i=0; i<extractor->field_count; i++) 
+    int i;
+
+    for (i=0; i<extractor->field_count; i++)
     {
         uint32_t type = (int)extractor->fields[i];
         key_len = key_len + OXM_LENGTH(type);
     }
 
     if (pkt)
-    {   
+    {
         //SET_STATE action
         state = act->state;
         state_mask = act->state_mask;
@@ -1412,14 +1499,13 @@ void state_table_set_state(struct state_table *table, struct packet *pkt, struct
         hard_rollback = act->hard_rollback;
         idle_timeout = act->idle_timeout;
         hard_timeout = act->hard_timeout;
-        
+
         if(!__extract_key(key, &table->write_key, pkt)){
             OFL_LOG_WARN(LOG_MODULE, "lookup key fields not found in the packet's header");
             return;
         }
     }
-
-    else if (msg){
+    else if (msg) {
         //SET_STATE message
         state = msg->state;
         state_mask = msg->state_mask;
@@ -1437,8 +1523,8 @@ void state_table_set_state(struct state_table *table, struct packet *pkt, struct
             return;
         }
     }
-    
-    HMAP_FOR_EACH_WITH_HASH(e, struct state_entry, 
+
+    HMAP_FOR_EACH_WITH_HASH(e, struct state_entry,
         hmap_node, hash_bytes(key, MAX_STATE_KEY_LEN, 0), &table->state_entries){
             if (!memcmp(key, e->key, MAX_STATE_KEY_LEN)){
                 OFL_LOG_WARN(LOG_MODULE, "state value is %u updated to hash map", state);
@@ -1461,17 +1547,17 @@ void state_table_set_state(struct state_table *table, struct packet *pkt, struct
                     e->stats->hard_timeout = 0;
                     e->stats->idle_rollback = 0;
                     e->stats->hard_rollback = 0;
-                    
+
                     if (hard_timeout>0 && hard_rollback!=((e->state & ~(state_mask)) | (state & state_mask))) {
                         e->stats->hard_timeout = hard_timeout;
                         e->stats->hard_rollback = hard_rollback;
-                        e->remove_at = now + hard_timeout;                       
+                        e->remove_at = now + hard_timeout;
                         hmap_insert(&table->hard_entries, &e->hard_node, hash_bytes(key, MAX_STATE_KEY_LEN, 0));
                     }
                     if (idle_timeout>0 && idle_rollback!=((e->state & ~(state_mask)) | (state & state_mask))) {
                         e->stats->idle_timeout = idle_timeout;
                         e->stats->idle_rollback = idle_rollback;
-                        e->last_used = now;                        
+                        e->last_used = now;
                         hmap_insert(&table->idle_entries, &e->idle_node, hash_bytes(key, MAX_STATE_KEY_LEN, 0));
                     }
                 }
@@ -1493,7 +1579,7 @@ void state_table_set_state(struct state_table *table, struct packet *pkt, struct
 
     // A new state entry with state!=DEF is always installed.
     if ((state & state_mask) != STATE_DEFAULT)
-    {       
+    {
         OFL_LOG_WARN(LOG_MODULE, "state value is %u inserted to hash map", e->state);
         hmap_insert(&table->state_entries, &e->hmap_node, hash_bytes(key, MAX_STATE_KEY_LEN, 0));
     }
@@ -1506,7 +1592,10 @@ void state_table_set_state(struct state_table *table, struct packet *pkt, struct
 
     // Configuring a timeout with rollback state=state makes no sense
     if (hard_timeout>0 && hard_rollback!=(state & state_mask)){
-        e->remove_at = hard_timeout>0 == 0 ? 0 : now + hard_timeout;
+
+	// FIXME!?!?!
+        // e->remove_at = hard_timeout>0 == 0 ? 0 : now + hard_timeout;
+        e->remove_at = hard_timeout == 0 ? 0 : now + hard_timeout;
         e->stats->hard_timeout = hard_timeout;
         e->stats->hard_rollback = hard_rollback;
         hmap_insert(&table->hard_entries, &e->hard_node, hash_bytes(key, MAX_STATE_KEY_LEN, 0));
@@ -1520,9 +1609,8 @@ void state_table_set_state(struct state_table *table, struct packet *pkt, struct
 }
 
 ofl_err
-handle_state_mod(struct pipeline *pl, struct ofl_exp_msg_state_mod *msg,
-                                                const struct sender *sender) {
-    
+handle_state_mod(struct pipeline *pl, struct ofl_exp_msg_state_mod *msg, const struct sender *sender UNUSED)
+{
     if (msg->command == OFPSC_STATEFUL_TABLE_CONFIG) {
         struct ofl_exp_stateful_table_config *p = (struct ofl_exp_stateful_table_config *) msg->payload;
         struct state_table *st = pl->tables[p->table_id]->state_table;
@@ -1533,7 +1621,7 @@ handle_state_mod(struct pipeline *pl, struct ofl_exp_msg_state_mod *msg,
         struct state_table *st = pl->tables[p->table_id]->state_table;
         if (state_table_is_stateful(st)){
             int update = 0;
-            if (msg->command == OFPSC_SET_U_EXTRACTOR) 
+            if (msg->command == OFPSC_SET_U_EXTRACTOR)
                 update = 1;
             state_table_set_extractor(st, (struct key_extractor *)p, update);
         }
@@ -1580,7 +1668,8 @@ handle_state_mod(struct pipeline *pl, struct ofl_exp_msg_state_mod *msg,
 }
 
 ofl_err
-handle_stats_request_state(struct pipeline *pl, struct ofl_exp_msg_multipart_request_state *msg, const struct sender *sender, struct ofl_exp_msg_multipart_reply_state *reply) {
+handle_stats_request_state(struct pipeline *pl, struct ofl_exp_msg_multipart_request_state *msg, const struct sender *sender UNUSED, struct ofl_exp_msg_multipart_reply_state *reply)
+{
     struct ofl_exp_state_stats **stats = xmalloc(sizeof(struct ofl_exp_state_stats *));
     size_t stats_size = 1;
     size_t stats_num = 0;
@@ -1605,9 +1694,10 @@ handle_stats_request_state(struct pipeline *pl, struct ofl_exp_msg_multipart_req
 }
 
 ofl_err
-handle_stats_request_global_state(struct pipeline *pl, const struct sender *sender, struct ofl_exp_msg_multipart_reply_global_state *reply) {
+handle_stats_request_global_state(struct pipeline *pl, const struct sender *sender UNUSED, struct ofl_exp_msg_multipart_reply_global_state *reply)
+{
     uint32_t global_states = pl->dp->global_states;
-    
+
     *reply = (struct ofl_exp_msg_multipart_reply_global_state)
             {{{{{.type = OFPT_MULTIPART_REPLY},
               .type = OFPMP_EXPERIMENTER, .flags = 0x0000},
@@ -1619,27 +1709,30 @@ handle_stats_request_global_state(struct pipeline *pl, const struct sender *send
 
 void
 state_table_stats(struct state_table *table, struct ofl_exp_msg_multipart_request_state *msg,
-                 struct ofl_exp_state_stats ***stats, size_t *stats_size, size_t *stats_num, uint8_t table_id) {
+                 struct ofl_exp_state_stats ***stats, size_t *stats_size, size_t *stats_num, uint8_t table_id)
+{
     struct state_entry *entry;
     size_t  i;
     uint32_t key_len = 0; //update-scope key extractor length
     uint32_t fields[MAX_EXTRACTION_FIELD_COUNT] = {0};
     struct timeval tv;
     struct key_extractor *extractor=&table->read_key;
-    for (i=0; i<extractor->field_count; i++) {
-        fields[i] = (int)extractor->fields[i];
-        key_len = key_len + OXM_LENGTH(fields[i]);
-     }
 
-    struct ofl_match * a = (struct ofl_match *)msg->match;
+    struct ofl_match const * a = (struct ofl_match const *)msg->match;
     struct ofl_match_tlv *state_key_match;
-    uint8_t count = 0; 
+    uint8_t count = 0;
     uint8_t found = 0;
     uint8_t len = 0;
     uint8_t aux = 0;
 
     uint8_t offset[MAX_EXTRACTION_FIELD_COUNT] = {0};
     uint8_t length[MAX_EXTRACTION_FIELD_COUNT] = {0};
+
+
+    for (i=0; i<extractor->field_count; i++) {
+        fields[i] = (int)extractor->fields[i];
+        key_len = key_len + OXM_LENGTH(fields[i]);
+     }
 
     //for each received match_field we must verify if it can be found in the key extractor and (if yes) save its position in the key (offset) and its length
     HMAP_FOR_EACH(state_key_match, struct ofl_match_tlv, hmap_node, &a->match_fields)
@@ -1651,7 +1744,7 @@ state_table_stats(struct state_table *table, struct ofl_exp_msg_multipart_reques
                 if(OXM_TYPE(state_key_match->header)==OXM_TYPE(fields[i]))
                 {
                     offset[count] = len;
-                    length[count] = OXM_LENGTH(fields[i]);              
+                    length[count] = OXM_LENGTH(fields[i]);
                     count++;
                     found = 1;
                     break;
@@ -1673,15 +1766,15 @@ state_table_stats(struct state_table *table, struct ofl_exp_msg_multipart_reques
 
             //for each received match_field compare the received value with the state entry's key
             aux = 0;
-            found = 1;      
+            found = 1;
             HMAP_FOR_EACH(state_key_match, struct ofl_match_tlv, hmap_node, &a->match_fields)
-            {               
-                if(memcmp(state_key_match->value,&entry->key[offset[aux]], length[aux])) 
+            {
+                if(memcmp(state_key_match->value,&entry->key[offset[aux]], length[aux]))
                     found = 0;
                 aux+=1;
             }
 
-        
+
             if(found && ((msg->get_from_state && msg->state == entry->state) || (!msg->get_from_state)))
             {
                 gettimeofday(&tv,NULL);
@@ -1695,7 +1788,7 @@ state_table_stats(struct state_table *table, struct ofl_exp_msg_multipart_reques
                 for (i=0;i<extractor->field_count;i++)
                     (*stats)[(*stats_num)]->fields[i]=fields[i];
                 (*stats)[(*stats_num)]->table_id = table_id;
-                (*stats)[(*stats_num)]->field_count = extractor->field_count;                   
+                (*stats)[(*stats_num)]->field_count = extractor->field_count;
                 (*stats)[(*stats_num)]->entry.key_len = key_len;
                 for (i=0;i<key_len;i++)
                     (*stats)[(*stats_num)]->entry.key[i]=entry->key[i];
@@ -1714,7 +1807,7 @@ state_table_stats(struct state_table *table, struct ofl_exp_msg_multipart_reques
         for (i=0;i<extractor->field_count;i++)
             (*stats)[(*stats_num)]->fields[i]=fields[i];
         (*stats)[(*stats_num)]->table_id = table_id;
-        (*stats)[(*stats_num)]->field_count = extractor->field_count;                   
+        (*stats)[(*stats_num)]->field_count = extractor->field_count;
         (*stats)[(*stats_num)]->entry.key_len = 0;
         (*stats)[(*stats_num)]->entry.state = STATE_DEFAULT;
         (*stats)[(*stats_num)]->idle_timeout = 0;
@@ -1726,13 +1819,14 @@ state_table_stats(struct state_table *table, struct ofl_exp_msg_multipart_reques
 }
 
 size_t
-ofl_structs_state_stats_ofp_len(struct ofl_exp_state_stats *stats, struct ofl_exp *exp) {
-
+ofl_structs_state_stats_ofp_len(struct ofl_exp_state_stats *stats UNUSED, struct ofl_exp const *exp UNUSED)
+{
     return ROUND_UP((sizeof(struct ofp_exp_state_stats)),8);
 }
 
 size_t
-ofl_structs_state_stats_ofp_total_len(struct ofl_exp_state_stats ** stats, size_t stats_num, struct ofl_exp *exp) {
+ofl_structs_state_stats_ofp_total_len(struct ofl_exp_state_stats ** stats, size_t stats_num, struct ofl_exp const *exp)
+{
     size_t sum;
     OFL_UTILS_SUM_ARR_FUN2(sum, stats, stats_num,
             ofl_structs_state_stats_ofp_len, exp);
@@ -1740,10 +1834,12 @@ ofl_structs_state_stats_ofp_total_len(struct ofl_exp_state_stats ** stats, size_
 }
 
 size_t
-ofl_structs_state_stats_pack(struct ofl_exp_state_stats *src, uint8_t *dst, struct ofl_exp *exp) {
+ofl_structs_state_stats_pack(struct ofl_exp_state_stats const *src, uint8_t *dst, struct ofl_exp const *exp UNUSED)
+{
     struct ofp_exp_state_stats *state_stats;
     size_t total_len;
-    uint8_t *data;
+    // FIXME!
+    // uint8_t *data;
     size_t  i;
     total_len = ROUND_UP(sizeof(struct ofp_exp_state_stats),8);
     state_stats = (struct ofp_exp_state_stats*) dst;
@@ -1754,10 +1850,10 @@ ofl_structs_state_stats_pack(struct ofl_exp_state_stats *src, uint8_t *dst, stru
 
     state_stats->pad = 0;
     state_stats->field_count = htonl(src->field_count);
-    
+
     for (i=0;i<src->field_count;i++)
            state_stats->fields[i]=htonl(src->fields[i]);
-    state_stats->entry.key_len = htonl(src->entry.key_len);   
+    state_stats->entry.key_len = htonl(src->entry.key_len);
     for (i=0;i<src->entry.key_len;i++)
            state_stats->entry.key[i]=src->entry.key[i];
     state_stats->entry.state = htonl(src->entry.state);
@@ -1771,7 +1867,6 @@ ofl_structs_state_stats_pack(struct ofl_exp_state_stats *src, uint8_t *dst, stru
 void
 ofl_structs_state_entry_print(FILE *stream, uint32_t field, uint8_t *key, uint8_t *offset)
 {
-
     switch (OXM_FIELD(field)) {
 
         case OFPXMT_OFB_IN_PORT:
@@ -1820,10 +1915,10 @@ ofl_structs_state_entry_print(FILE *stream, uint32_t field, uint8_t *key, uint8_
             fprintf(stream, "eth_dst=\""ETH_ADDR_FMT"\"", ETH_ADDR_ARGS(key));
             break;
         case OFPXMT_OFB_IPV4_DST:
-            fprintf(stream, "ipv4_dst=\""IP_FMT"\"", IP_ARGS(key));         
+            fprintf(stream, "ipv4_dst=\""IP_FMT"\"", IP_ARGS(key));
             break;
         case OFPXMT_OFB_IPV4_SRC:
-            fprintf(stream, "ipv4_src=\""IP_FMT"\"", IP_ARGS(key));         
+            fprintf(stream, "ipv4_src=\""IP_FMT"\"", IP_ARGS(key));
             break;
         case OFPXMT_OFB_IP_PROTO:
             fprintf(stream, "ip_proto=\"%d\"", *key);
@@ -1963,10 +2058,10 @@ ofl_structs_state_entry_print_default(FILE *stream, uint32_t field)
             fprintf(stream, "eth_dst=\"*\"");
             break;
         case OFPXMT_OFB_IPV4_DST:
-            fprintf(stream, "ipv4_dst=\"*\"");          
+            fprintf(stream, "ipv4_dst=\"*\"");
             break;
         case OFPXMT_OFB_IPV4_SRC:
-            fprintf(stream, "ipv4_src=\"*\"");          
+            fprintf(stream, "ipv4_src=\"*\"");
             break;
         case OFPXMT_OFB_IP_PROTO:
             fprintf(stream, "ip_proto=\"*\"");
@@ -2047,11 +2142,12 @@ ofl_structs_state_entry_print_default(FILE *stream, uint32_t field)
 }
 
 void
-ofl_structs_state_stats_print(FILE *stream, struct ofl_exp_state_stats *s, struct ofl_exp *exp) {
+ofl_structs_state_stats_print(FILE *stream, struct ofl_exp_state_stats *s, struct ofl_exp const *exp UNUSED)
+{
     size_t i;
     uint8_t offset=0;
     extern int colors;
-    if(colors) 
+    if(colors)
     {
         fprintf(stream, "{\x1B[31mtable\x1B[0m=\"");
         ofl_table_print(stream, s->table_id);
@@ -2060,7 +2156,7 @@ ofl_structs_state_stats_print(FILE *stream, struct ofl_exp_state_stats *s, struc
         for(i=0;i<s->field_count;i++)
         {
             if(s->entry.key_len==0)
-                ofl_structs_state_entry_print_default(stream,s->fields[i]); 
+                ofl_structs_state_entry_print_default(stream,s->fields[i]);
             else
                 ofl_structs_state_entry_print(stream,s->fields[i], s->entry.key+offset, &offset);
             if (s->field_count!=1 && i<s->field_count-1)
@@ -2069,10 +2165,10 @@ ofl_structs_state_stats_print(FILE *stream, struct ofl_exp_state_stats *s, struc
         fprintf(stream, "}, \x1B[31mstate\x1B[0m=\"");
         fprintf(stream, "%"PRIu32"\"", s->entry.state);
         if(s->entry.key_len!=0)
-            fprintf(stream, ", dur_s=\"%u\", dur_ns=\"%09u\", idle_to=\"%lu\", idle_rb=\"%u\", hard_to=\"%lu\", hard_rb=\"%u\"",s->duration_sec, s->duration_nsec, s->idle_timeout, s->idle_rollback, s->hard_timeout, s->hard_rollback);
+            fprintf(stream, ", dur_s=\"%u\", dur_ns=\"%09u\", idle_to=\"%u\", idle_rb=\"%u\", hard_to=\"%u\", hard_rb=\"%u\"",s->duration_sec, s->duration_nsec, s->idle_timeout, s->idle_rollback, s->hard_timeout, s->hard_rollback);
     }
 
-    else 
+    else
     {
         fprintf(stream, "{table=\"");
         ofl_table_print(stream, s->table_id);
@@ -2090,19 +2186,22 @@ ofl_structs_state_stats_print(FILE *stream, struct ofl_exp_state_stats *s, struc
         fprintf(stream, "}, state=\"");
         fprintf(stream, "%"PRIu32"\"", s->entry.state);
         if(s->entry.key_len!=0)
-            fprintf(stream, ", dur_s=\"%u\", dur_ns=\"%09u\", idle_to=\"%lu\", idle_rb=\"%u\", hard_to=\"%lu\", hard_rb=\"%u\"",s->duration_sec, s->duration_nsec, s->idle_timeout, s->idle_rollback, s->hard_timeout, s->hard_rollback);
+            fprintf(stream, ", dur_s=\"%u\", dur_ns=\"%09u\", idle_to=\"%u\", idle_rb=\"%u\", hard_to=\"%u\", hard_rb=\"%u\"",s->duration_sec, s->duration_nsec, s->idle_timeout, s->idle_rollback, s->hard_timeout, s->hard_rollback);
     }
 
     fprintf(stream, "}");
 }
 
 ofl_err
-ofl_structs_state_stats_unpack(struct ofp_exp_state_stats *src, uint8_t *buf, size_t *len, struct ofl_exp_state_stats **dst, struct ofl_exp *exp) {
+ofl_structs_state_stats_unpack(struct ofp_exp_state_stats const *src, uint8_t const *buf UNUSED, size_t *len, struct ofl_exp_state_stats **dst, struct ofl_exp const * exp UNUSED)
+{
     struct ofl_exp_state_stats *s;
-    ofl_err error;
+    // FIXME
+    // ofl_err error;
     size_t slen;
     size_t i;
-    int match_pos;
+    // int match_pos;
+
     if (*len < sizeof(struct ofp_exp_state_stats) ) {
         OFL_LOG_WARN(LOG_MODULE, "Received state stats has invalid length (%zu).", *len);
         return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
@@ -2141,7 +2240,7 @@ ofl_structs_state_stats_unpack(struct ofp_exp_state_stats *src, uint8_t *buf, si
     s->idle_rollback = ntohl(src->idle_rollback);
     s->hard_timeout = ntohl(src->hard_timeout);
     s->hard_rollback = ntohl(src->hard_rollback);
-    
+
     if (slen != 0) {
         *len = *len - ntohs(src->length) + slen;
         OFL_LOG_WARN(LOG_MODULE, "The received state stats contained extra bytes (%zu).", slen);
@@ -2154,7 +2253,8 @@ ofl_structs_state_stats_unpack(struct ofp_exp_state_stats *src, uint8_t *buf, si
 }
 
 ofl_err
-ofl_utils_count_ofp_state_stats(void *data, size_t data_len, size_t *count) {
+ofl_utils_count_ofp_state_stats(void *data, size_t data_len, size_t *count)
+{
     struct ofp_exp_state_stats *stat;
     uint8_t *d;
 
@@ -2175,7 +2275,8 @@ ofl_utils_count_ofp_state_stats(void *data, size_t data_len, size_t *count) {
 }
 
 void
-ofl_exp_stats_type_print(FILE *stream, uint32_t type) {
+ofl_exp_stats_type_print(FILE *stream, uint32_t type)
+{
     switch (type) {
         case (OFPMP_EXP_STATE_STATS):          { fprintf(stream, "state"); return; }
         case (OFPMP_EXP_FLAGS_STATS):          { fprintf(stream, "global_states"); return; }
@@ -2187,7 +2288,8 @@ ofl_exp_stats_type_print(FILE *stream, uint32_t type) {
 /*Functions used by experimenter match fields*/
 
 void
-ofl_structs_match_exp_put8(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint8_t value){
+ofl_structs_match_exp_put8(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint8_t value)
+{
    struct ofl_match_tlv *m = xmalloc(sizeof (struct ofl_match_tlv));
    int len = sizeof(uint8_t);
 
@@ -2200,7 +2302,8 @@ ofl_structs_match_exp_put8(struct ofl_match *match, uint32_t header, uint32_t ex
 }
 
 void
-ofl_structs_match_exp_put8m(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint8_t value, uint8_t mask){
+ofl_structs_match_exp_put8m(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint8_t value, uint8_t mask)
+{
     struct ofl_match_tlv *m = malloc(sizeof (struct ofl_match_tlv));
     int len = sizeof(uint8_t);
 
@@ -2214,7 +2317,8 @@ ofl_structs_match_exp_put8m(struct ofl_match *match, uint32_t header, uint32_t e
 }
 
 void
-ofl_structs_match_exp_put16(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint16_t value){
+ofl_structs_match_exp_put16(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint16_t value)
+{
    struct ofl_match_tlv *m = xmalloc(sizeof (struct ofl_match_tlv));
    int len = sizeof(uint16_t);
 
@@ -2227,7 +2331,8 @@ ofl_structs_match_exp_put16(struct ofl_match *match, uint32_t header, uint32_t e
 }
 
 void
-ofl_structs_match_exp_put16m(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint16_t value, uint16_t mask){
+ofl_structs_match_exp_put16m(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint16_t value, uint16_t mask)
+{
     struct ofl_match_tlv *m = malloc(sizeof (struct ofl_match_tlv));
     int len = sizeof(uint16_t);
 
@@ -2241,7 +2346,8 @@ ofl_structs_match_exp_put16m(struct ofl_match *match, uint32_t header, uint32_t 
 }
 
 void
-ofl_structs_match_exp_put32(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint32_t value){
+ofl_structs_match_exp_put32(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint32_t value)
+{
    struct ofl_match_tlv *m = xmalloc(sizeof (struct ofl_match_tlv));
    int len = sizeof(uint32_t);
 
@@ -2254,7 +2360,8 @@ ofl_structs_match_exp_put32(struct ofl_match *match, uint32_t header, uint32_t e
 }
 
 void
-ofl_structs_match_exp_put32m(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint32_t value, uint32_t mask){
+ofl_structs_match_exp_put32m(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint32_t value, uint32_t mask)
+{
     struct ofl_match_tlv *m = malloc(sizeof (struct ofl_match_tlv));
     int len = sizeof(uint32_t);
 
@@ -2268,7 +2375,8 @@ ofl_structs_match_exp_put32m(struct ofl_match *match, uint32_t header, uint32_t 
 }
 
 void
-ofl_structs_match_exp_put64(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint64_t value){
+ofl_structs_match_exp_put64(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint64_t value)
+{
    struct ofl_match_tlv *m = xmalloc(sizeof (struct ofl_match_tlv));
    int len = sizeof(uint64_t);
 
@@ -2281,7 +2389,8 @@ ofl_structs_match_exp_put64(struct ofl_match *match, uint32_t header, uint32_t e
 }
 
 void
-ofl_structs_match_exp_put64m(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint64_t value, uint64_t mask){
+ofl_structs_match_exp_put64m(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint64_t value, uint64_t mask)
+{
     struct ofl_match_tlv *m = malloc(sizeof (struct ofl_match_tlv));
     int len = sizeof(uint64_t);
 

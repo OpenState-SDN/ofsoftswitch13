@@ -219,55 +219,62 @@ state_table_del_state(struct state_table *, uint8_t *, uint32_t);
 void
 state_table_timeout(struct state_table *table);
 
+bool state_table_is_configured(struct state_table *table);
+
 /*experimenter message functions*/
 
+char *
+ofl_exp_openstate_msg_to_string(struct ofl_msg_experimenter const *msg);
+
 int
-ofl_exp_openstate_msg_pack(struct ofl_msg_experimenter *msg, uint8_t **buf, size_t *buf_len);
+ofl_exp_openstate_msg_pack(struct ofl_msg_experimenter const *msg, uint8_t **buf, size_t *buf_len);
 
 ofl_err
-ofl_exp_openstate_msg_unpack(struct ofp_header *oh, size_t *len, struct ofl_msg_experimenter **msg);
+ofl_exp_openstate_msg_unpack(struct ofp_header const *oh, size_t *len, struct ofl_msg_experimenter **msg);
 
 int
 ofl_exp_openstate_msg_free(struct ofl_msg_experimenter *msg);
 
 char *
-ofl_exp_openstate_msg_to_string(struct ofl_msg_experimenter *msg);
+OFl_exp_openstate_msg_to_string(struct ofl_msg_experimenter const *msg);
+
 
 /*experimenter action functions*/
 
+
 int
-ofl_exp_openstate_act_pack(struct ofl_action_header *src, struct ofp_action_header *dst);
+ofl_exp_openstate_act_pack(struct ofl_action_header const *src, struct ofp_action_header *dst);
 
 ofl_err
-ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct ofl_action_header **dst);
+ofl_exp_openstate_act_unpack(struct ofp_action_header const *src, size_t *len, struct ofl_action_header **dst);
 
 size_t
-ofl_exp_openstate_act_ofp_len(struct ofl_action_header *act);
+ofl_exp_openstate_act_ofp_len(struct ofl_action_header const *act);
 
 int
 ofl_exp_openstate_act_free(struct ofl_action_header *act);
 
 char *
-ofl_exp_openstate_act_to_string(struct ofl_action_header *act);
+ofl_exp_openstate_act_to_string(struct ofl_action_header const *act);
 
 /*experimenter stats functions*/
 int
-ofl_exp_openstate_stats_req_pack(struct ofl_msg_multipart_request_experimenter *ext, uint8_t **buf, size_t *buf_len, struct ofl_exp *exp);
+ofl_exp_openstate_stats_req_pack(struct ofl_msg_multipart_request_experimenter const *ext, uint8_t **buf, size_t *buf_len, struct ofl_exp const *exp);
 
 int
-ofl_exp_openstate_stats_reply_pack(struct ofl_msg_multipart_reply_experimenter *ext, uint8_t **buf, size_t *buf_len, struct ofl_exp *exp);
+ofl_exp_openstate_stats_reply_pack(struct ofl_msg_multipart_reply_experimenter const *ext, uint8_t **buf, size_t *buf_len, struct ofl_exp const *exp);
 
 char *
-ofl_exp_openstate_stats_request_to_string(struct ofl_msg_multipart_request_experimenter *ext, struct ofl_exp *exp);
+ofl_exp_openstate_stats_request_to_string(struct ofl_msg_multipart_request_experimenter *ext, struct ofl_exp const *exp);
 
 char *
-ofl_exp_openstate_stats_reply_to_string(struct ofl_msg_multipart_reply_experimenter *ext, struct ofl_exp *exp);
+ofl_exp_openstate_stats_reply_to_string(struct ofl_msg_multipart_reply_experimenter *ext, struct ofl_exp const *exp);
 
 ofl_err
-ofl_exp_openstate_stats_req_unpack(struct ofp_multipart_request *os, uint8_t *buf, size_t *len, struct ofl_msg_multipart_request_header **msg, struct ofl_exp *exp);
+ofl_exp_openstate_stats_req_unpack(struct ofp_multipart_request const *os, uint8_t const *buf, size_t *len, struct ofl_msg_multipart_request_header **msg, struct ofl_exp const *exp);
 
 ofl_err
-ofl_exp_openstate_stats_reply_unpack(struct ofp_multipart_reply *os, uint8_t *buf, size_t *len, struct ofl_msg_multipart_reply_header **msg, struct ofl_exp *exp);
+ofl_exp_openstate_stats_reply_unpack(struct ofp_multipart_reply const *os, uint8_t const *buf, size_t *len, struct ofl_msg_multipart_reply_header **msg, struct ofl_exp const *exp);
 
 int
 ofl_exp_openstate_stats_req_free(struct ofl_msg_multipart_request_header *msg);
@@ -276,11 +283,12 @@ int
 ofl_exp_openstate_stats_reply_free(struct ofl_msg_multipart_reply_header *msg);
 
 /*experimenter match fields functions*/
+
 int
-ofl_exp_openstate_field_unpack(struct ofl_match *match, struct oxm_field *f, void *experimenter_id, void *value, void *mask);
+ofl_exp_openstate_field_unpack(struct ofl_match *match, struct oxm_field const *f, void const *experimenter_id, void const *value, void const *mask);
 
 void
-ofl_exp_openstate_field_pack(struct ofpbuf *buf, struct ofl_match_tlv *oft);
+ofl_exp_openstate_field_pack(struct ofpbuf *buf, struct ofl_match_tlv const *oft);
 
 void
 ofl_exp_openstate_field_match(struct ofl_match_tlv *f, int *packet_header, int *field_len, uint8_t **flow_val, uint8_t **flow_mask);
@@ -314,13 +322,13 @@ state_table_stats(struct state_table *table, struct ofl_exp_msg_multipart_reques
                  struct ofl_exp_state_stats ***stats, size_t *stats_size, size_t *stats_num, uint8_t table_id);
 
 size_t
-ofl_structs_state_stats_pack(struct ofl_exp_state_stats *src, uint8_t *dst, struct ofl_exp *exp);
+ofl_structs_state_stats_pack(struct ofl_exp_state_stats const *src, uint8_t *dst, struct ofl_exp const *exp);
 
 size_t
-ofl_structs_state_stats_ofp_total_len(struct ofl_exp_state_stats ** stats, size_t stats_num, struct ofl_exp *exp);
+ofl_structs_state_stats_ofp_total_len(struct ofl_exp_state_stats ** stats, size_t stats_num, struct ofl_exp const *exp);
 
 size_t
-ofl_structs_state_stats_ofp_len(struct ofl_exp_state_stats *stats, struct ofl_exp *exp);
+ofl_structs_state_stats_ofp_len(struct ofl_exp_state_stats *stats, struct ofl_exp const *exp);
 
 void
 ofl_structs_state_entry_print(FILE *stream, uint32_t field, uint8_t *key, uint8_t *offset);
@@ -329,10 +337,10 @@ void
 ofl_structs_state_entry_print_default(FILE *stream, uint32_t field);
 
 void
-ofl_structs_state_stats_print(FILE *stream, struct ofl_exp_state_stats *s, struct ofl_exp *exp);
+ofl_structs_state_stats_print(FILE *stream, struct ofl_exp_state_stats *s, struct ofl_exp const *exp);
 
 ofl_err
-ofl_structs_state_stats_unpack(struct ofp_exp_state_stats *src, uint8_t *buf, size_t *len, struct ofl_exp_state_stats **dst, struct ofl_exp *exp);
+ofl_structs_state_stats_unpack(struct ofp_exp_state_stats const *src, uint8_t const *buf, size_t *len, struct ofl_exp_state_stats **dst, struct ofl_exp const *exp);
 
 ofl_err
 ofl_utils_count_ofp_state_stats(void *data, size_t data_len, size_t *count);
