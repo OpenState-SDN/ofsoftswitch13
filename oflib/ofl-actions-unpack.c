@@ -49,8 +49,9 @@ OFL_LOG_INIT(LOG_MODULE)
 
 
 ofl_err
-ofl_actions_unpack(struct ofp_action_header *src, size_t *len, struct ofl_action_header **dst, struct ofl_exp *exp) {
-
+ofl_actions_unpack(struct ofp_action_header const *src, size_t *len, struct ofl_action_header **dst,
+		   struct ofl_exp const *exp)
+{
     if (*len < sizeof(struct ofp_action_header)) {
         OFL_LOG_WARN(LOG_MODULE, "Received action is too short (%zu).", *len);
         return ofl_error(OFPET_BAD_ACTION, OFPBAC_BAD_LEN);
@@ -137,7 +138,7 @@ ofl_actions_unpack(struct ofp_action_header *src, size_t *len, struct ofl_action
             break;
         }
 
-        case OFPAT_PUSH_VLAN: 
+        case OFPAT_PUSH_VLAN:
         case OFPAT_PUSH_PBB:
         case OFPAT_PUSH_MPLS: {
             struct ofp_action_push *sa;
@@ -170,14 +171,14 @@ ofl_actions_unpack(struct ofp_action_header *src, size_t *len, struct ofl_action
             break;
         }
 
-        case OFPAT_POP_VLAN: 
+        case OFPAT_POP_VLAN:
         case OFPAT_POP_PBB: {
             //ofp_action_header length was already checked
             *len -= sizeof(struct ofp_action_header);
             *dst = (struct ofl_action_header *)malloc(sizeof(struct ofl_action_header));
             break;
         }
-                
+
         case OFPAT_POP_MPLS: {
             struct ofp_action_pop_mpls *sa;
             struct ofl_action_pop_mpls *da;
@@ -274,11 +275,11 @@ ofl_actions_unpack(struct ofp_action_header *src, size_t *len, struct ofl_action
             struct ofp_action_set_field *sa;
             struct ofl_action_set_field *da;
             uint8_t *value;
-            
+
             sa = (struct ofp_action_set_field*) src;
             da = (struct ofl_action_set_field *)malloc(sizeof(struct ofl_action_set_field));
             da->field = (struct ofl_match_tlv*) malloc(sizeof(struct ofl_match_tlv));
-            
+
             memcpy(&da->field->header,sa->field,4);
             da->field->header = ntohl(da->field->header);
             value = (uint8_t *) src + sizeof (struct ofp_action_set_field);
@@ -289,7 +290,7 @@ ofl_actions_unpack(struct ofp_action_header *src, size_t *len, struct ofl_action
                                     || da->field->header == OXM_OF_IPV6_EXTHDR
 									|| da->field->header == OXM_EXP_FLAGS
                                     || da->field->header == OXM_EXP_STATE){
-				
+
                 return ofl_error(OFPET_BAD_ACTION, OFPBAC_BAD_SET_TYPE);
             }
             switch(OXM_LENGTH(da->field->header)){
@@ -305,22 +306,22 @@ ofl_actions_unpack(struct ofp_action_header *src, size_t *len, struct ofl_action
                     break;
                 }
                 case 4:{
-                    uint32_t v; 
-        		    uint8_t field = OXM_FIELD(da->field->header);					
-        		    if( field != 11 && field != 12 && field != 22 && field != 23)  
-        		        v = htonl(*((uint32_t*) value));
-        		    else v = *((uint32_t*) value);
+                    uint32_t v;
+		    uint8_t field = OXM_FIELD(da->field->header);
+				if( field != 11 && field != 12 && field != 22 && field != 23)
+		        v = htonl(*((uint32_t*) value));
+		    else v = *((uint32_t*) value);
                     memcpy(da->field->value , &v, OXM_LENGTH(da->field->header));
                     break;
                 }
                 case 8:{
-                    uint64_t v = ntoh64(*((uint64_t*) value));                    
+                    uint64_t v = ntoh64(*((uint64_t*) value));
                     memcpy(da->field->value , &v, OXM_LENGTH(da->field->header));
                     break;
-                }                
+                }
             }
-     	    *len -= ROUND_UP(ntohs(src->len),8);
-     	    *dst = (struct ofl_action_header *)da;
+	    *len -= ROUND_UP(ntohs(src->len),8);
+	    *dst = (struct ofl_action_header *)da;
             break;
 	}
 

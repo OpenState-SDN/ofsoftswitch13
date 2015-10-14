@@ -1,5 +1,5 @@
 /* Copyright (c) 2011, TrafficLab, Ericsson Research, Hungary
- * Copyright (c) 2012, CPqD, Brazil    
+ * Copyright (c) 2012, CPqD, Brazil
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,7 +47,8 @@ OFL_LOG_INIT(LOG_MODULE)
 /* Frees the OFlib stats request message along with any dynamically allocated
  * structures. */
 static int
-ofl_msg_free_error(struct ofl_msg_error *msg) {
+ofl_msg_free_error(struct ofl_msg_error *msg)
+{
     free(msg->data);
     free(msg);
 
@@ -55,7 +56,8 @@ ofl_msg_free_error(struct ofl_msg_error *msg) {
 }
 
 static int
-ofl_msg_free_multipart_request(struct ofl_msg_multipart_request_header *msg, struct ofl_exp *exp) {
+ofl_msg_free_multipart_request(struct ofl_msg_multipart_request_header *msg, struct ofl_exp const *exp)
+{
     switch (msg->type) {
         case OFPMP_DESC: {
             break;
@@ -79,7 +81,7 @@ ofl_msg_free_multipart_request(struct ofl_msg_multipart_request_header *msg, str
             struct ofl_msg_multipart_request_table_features *m = (struct ofl_msg_multipart_request_table_features *)msg;
             OFL_UTILS_FREE_ARR_FUN2(m->table_features, m->tables_num,
                                     ofl_structs_free_table_features, exp);
-            break; 
+            break;
         }
         case OFPMP_PORT_DESC:
             break;
@@ -103,7 +105,8 @@ ofl_msg_free_multipart_request(struct ofl_msg_multipart_request_header *msg, str
 /* Frees the OFlib stats reply message along with any dynamically allocated
  * structures. */
 static int
-ofl_msg_free_multipart_reply(struct ofl_msg_multipart_reply_header *msg, struct ofl_exp *exp) {
+ofl_msg_free_multipart_reply(struct ofl_msg_multipart_reply_header *msg, struct ofl_exp const *exp)
+{
     switch (msg->type) {
         case OFPMP_DESC: {
             struct ofl_msg_reply_desc *stat = (struct ofl_msg_reply_desc *) msg;
@@ -147,13 +150,13 @@ ofl_msg_free_multipart_reply(struct ofl_msg_multipart_reply_header *msg, struct 
         case OFPMP_METER:{
             struct ofl_msg_multipart_reply_meter *stat = (struct ofl_msg_multipart_reply_meter*)msg;
             OFL_UTILS_FREE_ARR_FUN(stat->stats, stat->stats_num,
-                                   ofl_structs_free_meter_stats);            
+                                   ofl_structs_free_meter_stats);
             break;
         }
         case OFPMP_METER_CONFIG:{
             struct ofl_msg_multipart_reply_meter_conf *conf = (struct ofl_msg_multipart_reply_meter_conf *)msg;
             OFL_UTILS_FREE_ARR_FUN(conf->stats, conf->stats_num,
-                                   ofl_structs_free_meter_config);             
+                                   ofl_structs_free_meter_config);
             break;
         }
         case OFPMP_METER_FEATURES:{
@@ -168,16 +171,16 @@ ofl_msg_free_multipart_reply(struct ofl_msg_multipart_reply_header *msg, struct 
             break;
         }
         case OFPMP_PORT_DESC:{
-            struct ofl_msg_multipart_reply_port_desc *stat = (struct ofl_msg_multipart_reply_port_desc *)msg;        
+            struct ofl_msg_multipart_reply_port_desc *stat = (struct ofl_msg_multipart_reply_port_desc *)msg;
             OFL_UTILS_FREE_ARR_FUN(stat->stats, stat->stats_num,
                                     ofl_structs_free_port);
-            break;            
+            break;
         }
         case OFPMP_TABLE_FEATURES:{
             struct ofl_msg_multipart_reply_table_features *m = (struct ofl_msg_multipart_reply_table_features *)msg;
             OFL_UTILS_FREE_ARR_FUN2(m->table_features, m->tables_num,
                                     ofl_structs_free_table_features, exp);
-            break;        
+            break;
         }
         case OFPMP_EXPERIMENTER: {
             if (exp == NULL || exp->stats == NULL || exp->stats->reply_free == NULL) {
@@ -200,8 +203,8 @@ ofl_msg_free_multipart_reply(struct ofl_msg_multipart_reply_header *msg, struct 
 }
 
 int
-ofl_msg_free(struct ofl_msg_header *msg, struct ofl_exp *exp) {
-     
+ofl_msg_free(struct ofl_msg_header *msg, struct ofl_exp const *exp)
+{
     switch (msg->type) {
         case OFPT_HELLO: {
             break;
@@ -296,13 +299,14 @@ ofl_msg_free(struct ofl_msg_header *msg, struct ofl_exp *exp) {
             break;
         }
     }
-    
+
     free(msg);
     return 0;
 }
 
-int 
-ofl_msg_free_meter_mod(struct ofl_msg_meter_mod * msg, bool with_bands){
+int
+ofl_msg_free_meter_mod(struct ofl_msg_meter_mod * msg, bool with_bands)
+{
     if (with_bands) {
        OFL_UTILS_FREE_ARR_FUN(msg->bands, msg->meter_bands_num,
                                   ofl_structs_free_meter_bands);
@@ -312,7 +316,8 @@ ofl_msg_free_meter_mod(struct ofl_msg_meter_mod * msg, bool with_bands){
 }
 
 int
-ofl_msg_free_packet_out(struct ofl_msg_packet_out *msg, bool with_data, struct ofl_exp *exp) {
+ofl_msg_free_packet_out(struct ofl_msg_packet_out *msg, bool with_data, struct ofl_exp const *exp)
+{
     if (with_data) {
         free(msg->data);
     }
@@ -324,7 +329,8 @@ ofl_msg_free_packet_out(struct ofl_msg_packet_out *msg, bool with_data, struct o
 }
 
 int
-ofl_msg_free_group_mod(struct ofl_msg_group_mod *msg, bool with_buckets, struct ofl_exp *exp) {
+ofl_msg_free_group_mod(struct ofl_msg_group_mod *msg, bool with_buckets, struct ofl_exp const *exp)
+{
     if (with_buckets) {
         OFL_UTILS_FREE_ARR_FUN2(msg->buckets, msg->buckets_num,
                                 ofl_structs_free_bucket, exp);
@@ -335,7 +341,8 @@ ofl_msg_free_group_mod(struct ofl_msg_group_mod *msg, bool with_buckets, struct 
 }
 
 int
-ofl_msg_free_flow_mod(struct ofl_msg_flow_mod *msg, bool with_match, bool with_instructions, struct ofl_exp *exp) {
+ofl_msg_free_flow_mod(struct ofl_msg_flow_mod *msg, bool with_match, bool with_instructions, struct ofl_exp const *exp)
+{
     if (with_match) {
         ofl_structs_free_match(msg->match, exp);
     }
@@ -350,7 +357,8 @@ ofl_msg_free_flow_mod(struct ofl_msg_flow_mod *msg, bool with_match, bool with_i
 
 
 int
-ofl_msg_free_flow_removed(struct ofl_msg_flow_removed *msg, bool with_stats, struct ofl_exp *exp) {
+ofl_msg_free_flow_removed(struct ofl_msg_flow_removed *msg, bool with_stats, struct ofl_exp const *exp)
+{
     if (with_stats) {
         ofl_structs_free_flow_stats(msg->stats, exp);
     }
@@ -361,7 +369,8 @@ ofl_msg_free_flow_removed(struct ofl_msg_flow_removed *msg, bool with_stats, str
 
 
 bool
-ofl_msg_merge_multipart_request_table_features(struct ofl_msg_multipart_request_table_features *orig, struct ofl_msg_multipart_request_table_features *merge) {
+ofl_msg_merge_multipart_request_table_features(struct ofl_msg_multipart_request_table_features *orig, struct ofl_msg_multipart_request_table_features *merge)
+{
     uint32_t new_tables_num;
     size_t i, j;
     struct ofl_table_feature_prop_header **properties;
@@ -425,7 +434,7 @@ ofl_msg_merge_multipart_request_table_features(struct ofl_msg_multipart_request_
 	  case OFPTFPT_WRITE_SETFIELD:
 	  case OFPTFPT_WRITE_SETFIELD_MISS:
 	  case OFPTFPT_APPLY_SETFIELD:
-	  case OFPTFPT_APPLY_SETFIELD_MISS: { 
+	  case OFPTFPT_APPLY_SETFIELD_MISS: {
 	    struct ofl_table_feature_prop_oxm *old_prop_o = (struct ofl_table_feature_prop_oxm*) old_prop;
 	    struct ofl_table_feature_prop_oxm *new_prop_o;
 	    new_prop_o = (struct ofl_table_feature_prop_oxm*) malloc(sizeof(struct ofl_table_feature_prop_oxm));
@@ -449,7 +458,8 @@ ofl_msg_merge_multipart_request_table_features(struct ofl_msg_multipart_request_
 }
 
 bool
-ofl_msg_merge_multipart_reply_flow(struct ofl_msg_multipart_reply_flow *orig, struct ofl_msg_multipart_reply_flow *merge) {
+ofl_msg_merge_multipart_reply_flow(struct ofl_msg_multipart_reply_flow *orig, struct ofl_msg_multipart_reply_flow *merge)
+{
     uint32_t new_stats_num;
     size_t i, j;
 
@@ -469,7 +479,8 @@ ofl_msg_merge_multipart_reply_flow(struct ofl_msg_multipart_reply_flow *orig, st
 }
 
 bool
-ofl_msg_merge_multipart_reply_table(struct ofl_msg_multipart_reply_table *orig, struct ofl_msg_multipart_reply_table *merge) {
+ofl_msg_merge_multipart_reply_table(struct ofl_msg_multipart_reply_table *orig, struct ofl_msg_multipart_reply_table *merge)
+{
     uint32_t new_stats_num;
     size_t i, j;
 
@@ -489,7 +500,8 @@ ofl_msg_merge_multipart_reply_table(struct ofl_msg_multipart_reply_table *orig, 
 }
 
 bool
-ofl_msg_merge_multipart_reply_port(struct ofl_msg_multipart_reply_port *orig, struct ofl_msg_multipart_reply_port *merge) {
+ofl_msg_merge_multipart_reply_port(struct ofl_msg_multipart_reply_port *orig, struct ofl_msg_multipart_reply_port *merge)
+{
     uint32_t new_stats_num;
     size_t i, j;
 
@@ -509,7 +521,8 @@ ofl_msg_merge_multipart_reply_port(struct ofl_msg_multipart_reply_port *orig, st
 }
 
 bool
-ofl_msg_merge_multipart_reply_queue(struct ofl_msg_multipart_reply_queue *orig, struct ofl_msg_multipart_reply_queue *merge) {
+ofl_msg_merge_multipart_reply_queue(struct ofl_msg_multipart_reply_queue *orig, struct ofl_msg_multipart_reply_queue *merge)
+{
     uint32_t new_stats_num;
     size_t i, j;
 

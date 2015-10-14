@@ -1,5 +1,5 @@
 /* Copyright (c) 2011, TrafficLab, Ericsson Research, Hungary
- * Copyright (c) 2012, CPqD, Brazil 
+ * Copyright (c) 2012, CPqD, Brazil
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,10 +45,10 @@ char *decimal_to_binary(uint32_t n)
 {
    int c, d, count;
    char *pointer;
- 
+
    count = 0;
    pointer = (char*)malloc(32+1);
- 
+
    if ( pointer == NULL )
       exit(EXIT_FAILURE);
    for ( c = 31 ; c >= 0 ; c-- )
@@ -61,11 +61,12 @@ char *decimal_to_binary(uint32_t n)
       count++;
    }
    *(pointer+count) = '\0';
- 
+
    return  pointer;
 }
 
-void masked_value_print(char *string,char *flag, char *flag_mask){
+void masked_value_print(char *string,char *flag, char *flag_mask)
+{
     int i=0;
 
     for(i=0;i<32;i++){
@@ -81,7 +82,8 @@ void masked_value_print(char *string,char *flag, char *flag_mask){
 
 
 char *
-ofl_port_to_string(uint32_t port) {
+ofl_port_to_string(uint32_t port)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -92,7 +94,8 @@ ofl_port_to_string(uint32_t port) {
 }
 
 void
-ofl_port_print(FILE *stream, uint32_t port) {
+ofl_port_print(FILE *stream, uint32_t port)
+{
     switch (port) {
         case (OFPP_IN_PORT): {    fprintf(stream, "in_port"); return; }
         case (OFPP_TABLE): {      fprintf(stream, "table"); return; }
@@ -107,7 +110,8 @@ ofl_port_print(FILE *stream, uint32_t port) {
 }
 
 char *
-ofl_ipv6_ext_hdr_to_string(uint16_t ext_hdr){
+ofl_ipv6_ext_hdr_to_string(uint16_t ext_hdr)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -118,7 +122,8 @@ ofl_ipv6_ext_hdr_to_string(uint16_t ext_hdr){
 }
 
 void
-ofl_ipv6_ext_hdr_print(FILE *stream, uint16_t ext_hdr) {
+ofl_ipv6_ext_hdr_print(FILE *stream, uint16_t ext_hdr)
+{
 
 	if (ext_hdr != 0) fprintf(stream, "|");
     if (ext_hdr & OFPIEH_NONEXT) {   fprintf(stream, "no_next|"); }
@@ -133,7 +138,8 @@ ofl_ipv6_ext_hdr_print(FILE *stream, uint16_t ext_hdr) {
 }
 
 char *
-ofl_queue_to_string(uint32_t queue) {
+ofl_queue_to_string(uint32_t queue)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -144,7 +150,8 @@ ofl_queue_to_string(uint32_t queue) {
 }
 
 void
-ofl_queue_print(FILE *stream, uint32_t queue) {
+ofl_queue_print(FILE *stream, uint32_t queue)
+{
     switch (queue) {
         case (OFPQ_ALL): {        fprintf(stream, "all"); return; }
         default: {                fprintf(stream, "%u", queue); return; }
@@ -153,7 +160,8 @@ ofl_queue_print(FILE *stream, uint32_t queue) {
 
 
 char *
-ofl_group_to_string(uint32_t group) {
+ofl_group_to_string(uint32_t group)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -164,7 +172,8 @@ ofl_group_to_string(uint32_t group) {
 }
 
 void
-ofl_group_print(FILE *stream, uint32_t group) {
+ofl_group_print(FILE *stream, uint32_t group)
+{
     switch (group) {
         case (OFPG_ALL): { fprintf(stream, "all"); return; }
         case (OFPG_ANY): { fprintf(stream, "any"); return; }
@@ -175,7 +184,8 @@ ofl_group_print(FILE *stream, uint32_t group) {
 
 
 char *
-ofl_table_to_string(uint8_t table) {
+ofl_table_to_string(uint8_t table)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -186,7 +196,8 @@ ofl_table_to_string(uint8_t table) {
 }
 
 void
-ofl_table_print(FILE *stream, uint8_t table) {
+ofl_table_print(FILE *stream, uint8_t table)
+{
     switch (table) {
         case (0xff): { fprintf(stream, "all"); return; }
         default: {     fprintf(stream, "%u", table); return; }
@@ -196,7 +207,8 @@ ofl_table_print(FILE *stream, uint8_t table) {
 
 
 char *
-ofl_vlan_vid_to_string(uint32_t vid) {
+ofl_vlan_vid_to_string(uint32_t vid)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -207,7 +219,8 @@ ofl_vlan_vid_to_string(uint32_t vid) {
 }
 
 void
-ofl_vlan_vid_print(FILE *stream, uint32_t vid) {
+ofl_vlan_vid_print(FILE *stream, uint32_t vid)
+{
     switch (vid) {
         case (OFPVID_PRESENT): {  fprintf(stream, "any"); return; }
         case (OFPVID_NONE): { fprintf(stream, "none"); return; }
@@ -218,7 +231,8 @@ ofl_vlan_vid_print(FILE *stream, uint32_t vid) {
 
 
 char *
-ofl_action_type_to_string(uint16_t type) {
+ofl_action_type_to_string(uint16_t type)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -229,7 +243,8 @@ ofl_action_type_to_string(uint16_t type) {
 }
 
 void
-ofl_action_type_print(FILE *stream, uint16_t type) {
+ofl_action_type_print(FILE *stream, uint16_t type)
+{
     extern int colors;
     if(colors) {
         switch (type) {
@@ -278,7 +293,8 @@ ofl_action_type_print(FILE *stream, uint16_t type) {
 }
 
 char *
-ofl_oxm_type_to_string(uint16_t type) {
+ofl_oxm_type_to_string(uint16_t type)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -289,7 +305,8 @@ ofl_oxm_type_to_string(uint16_t type) {
 }
 
 void
-ofl_oxm_type_print(FILE *stream, uint32_t type){
+ofl_oxm_type_print(FILE *stream, uint32_t type)
+{
     switch(type){
     case OXM_OF_IN_PORT:            {fprintf(stream, "in_port"); return; }
     case OXM_OF_IN_PHY_PORT:        {fprintf(stream, "in_phy_port"); return; }
@@ -331,7 +348,7 @@ ofl_oxm_type_print(FILE *stream, uint32_t type){
     case OXM_OF_PBB_ISID:           {fprintf(stream, "pbb_isid"); return; }
     case OXM_OF_TUNNEL_ID:          {fprintf(stream, "tunnel_id"); return; }
     case OXM_OF_IPV6_EXTHDR:        {fprintf(stream, "ipv6_exthdr"); return; }
-    default: {                       fprintf(stream, "?(%d)", type); return; }    
+    default: {                       fprintf(stream, "?(%d)", type); return; }
     }
 
 
@@ -339,7 +356,8 @@ ofl_oxm_type_print(FILE *stream, uint32_t type){
 
 
 char *
-ofl_instruction_type_to_string(uint16_t type) {
+ofl_instruction_type_to_string(uint16_t type)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -350,7 +368,8 @@ ofl_instruction_type_to_string(uint16_t type) {
 }
 
 void
-ofl_instruction_type_print(FILE *stream, uint16_t type) {
+ofl_instruction_type_print(FILE *stream, uint16_t type)
+{
     extern int colors;
     if(colors)
     {
@@ -377,13 +396,14 @@ ofl_instruction_type_print(FILE *stream, uint16_t type) {
             case OFPIT_EXPERIMENTER: {   fprintf(stream, "exp"); return; }
             default: {                   fprintf(stream, "?(%u)", type); return; }
         }
-    }         
+    }
 }
 
 
 
 char *
-ofl_queue_prop_type_to_string(uint16_t type) {
+ofl_queue_prop_type_to_string(uint16_t type)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -394,7 +414,8 @@ ofl_queue_prop_type_to_string(uint16_t type) {
 }
 
 void
-ofl_queue_prop_type_print(FILE *stream, uint16_t type) {
+ofl_queue_prop_type_print(FILE *stream, uint16_t type)
+{
     switch (type) {
         case (OFPQT_MIN_RATE): { fprintf(stream, "minrate"); return; }
         default: {               fprintf(stream, "?(%u)", type); return; }
@@ -404,7 +425,8 @@ ofl_queue_prop_type_print(FILE *stream, uint16_t type) {
 
 
 char *
-ofl_error_type_to_string(uint16_t type) {
+ofl_error_type_to_string(uint16_t type)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -415,7 +437,8 @@ ofl_error_type_to_string(uint16_t type) {
 }
 
 void
-ofl_error_type_print(FILE *stream, uint16_t type) {
+ofl_error_type_print(FILE *stream, uint16_t type)
+{
     switch (type) {
         case (OFPET_HELLO_FAILED): {         fprintf(stream, "HELLO_FAILED"); return; }
         case (OFPET_BAD_REQUEST): {          fprintf(stream, "BAD_REQUEST"); return; }
@@ -437,7 +460,8 @@ ofl_error_type_print(FILE *stream, uint16_t type) {
 
 
 char *
-ofl_error_code_to_string(uint16_t type, uint16_t code) {
+ofl_error_code_to_string(uint16_t type, uint16_t code)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -448,7 +472,8 @@ ofl_error_code_to_string(uint16_t type, uint16_t code) {
 }
 
 void
-ofl_error_code_print(FILE *stream, uint16_t type, uint16_t code) {
+ofl_error_code_print(FILE *stream, uint16_t type, uint16_t code)
+{
     switch (type) {
         case (OFPET_HELLO_FAILED): {
             switch (code) {
@@ -606,7 +631,8 @@ ofl_error_code_print(FILE *stream, uint16_t type, uint16_t code) {
 
 
 char *
-ofl_message_type_to_string(uint16_t type) {
+ofl_message_type_to_string(uint16_t type)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -617,7 +643,8 @@ ofl_message_type_to_string(uint16_t type) {
 }
 
 void
-ofl_message_type_print(FILE *stream, uint16_t type) {
+ofl_message_type_print(FILE *stream, uint16_t type)
+{
     switch (type) {
         case OFPT_HELLO: {                    fprintf(stream, "hello"); return; }
         case OFPT_ERROR: {                    fprintf(stream, "error"); return; }
@@ -646,7 +673,7 @@ ofl_message_type_print(FILE *stream, uint16_t type) {
 		case OFPT_GET_ASYNC_REQUEST:        { fprintf(stream, "get_async_req"); return;}
 		case OFPT_GET_ASYNC_REPLY:          { fprintf(stream, "get_async_rep"); return;}
 		case OFPT_SET_ASYNC:                { fprintf(stream, "set_async"); return;}
-		case OFPT_METER_MOD:				{ fprintf(stream, "meter_mod"); return;}  
+		case OFPT_METER_MOD:				{ fprintf(stream, "meter_mod"); return;}
 		case OFPT_ROLE_REQUEST:             { fprintf(stream, "role_request"); return;}
 		case OFPT_ROLE_REPLY:               { fprintf(stream, "role_reply"); return;}
 		default: {                            fprintf(stream, "?(%u)", type); return; }
@@ -656,7 +683,8 @@ ofl_message_type_print(FILE *stream, uint16_t type) {
 
 
 char *
-ofl_buffer_to_string(uint32_t buffer) {
+ofl_buffer_to_string(uint32_t buffer)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -667,7 +695,8 @@ ofl_buffer_to_string(uint32_t buffer) {
 }
 
 void
-ofl_buffer_print(FILE *stream, uint32_t buffer) {
+ofl_buffer_print(FILE *stream, uint32_t buffer)
+{
     switch (buffer) {
         case (0xffffffff): { fprintf(stream, "none"); return; }
         default: {           fprintf(stream, "%u", buffer); return; }
@@ -677,7 +706,8 @@ ofl_buffer_print(FILE *stream, uint32_t buffer) {
 
 
 char *
-ofl_packet_in_reason_to_string(uint8_t reason) {
+ofl_packet_in_reason_to_string(uint8_t reason)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -688,7 +718,8 @@ ofl_packet_in_reason_to_string(uint8_t reason) {
 }
 
 void
-ofl_packet_in_reason_print(FILE *stream, uint8_t reason) {
+ofl_packet_in_reason_print(FILE *stream, uint8_t reason)
+{
     switch (reason) {
         case (OFPR_NO_MATCH): { fprintf(stream, "no_match"); return; }
         case (OFPR_ACTION): {   fprintf(stream, "action"); return; }
@@ -697,9 +728,9 @@ ofl_packet_in_reason_print(FILE *stream, uint8_t reason) {
 }
 
 
-
 char *
-ofl_flow_removed_reason_to_string(uint8_t reason) {
+ofl_flow_removed_reason_to_string(uint8_t reason)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -710,13 +741,14 @@ ofl_flow_removed_reason_to_string(uint8_t reason) {
 }
 
 void
-ofl_flow_removed_reason_print(FILE *stream, uint8_t reason) {
+ofl_flow_removed_reason_print(FILE *stream, uint8_t reason)
+{
     switch(reason) {
         case (OFPRR_IDLE_TIMEOUT): { fprintf(stream, "idle"); return; }
         case (OFPRR_HARD_TIMEOUT): { fprintf(stream, "hard"); return; }
         case (OFPRR_DELETE):       { fprintf(stream, "del"); return; }
         case (OFPRR_GROUP_DELETE): { fprintf(stream, "group"); return; }
-        case (OFPRR_METER_DELETE): { fprintf(stream, "meter"); return; }        
+        case (OFPRR_METER_DELETE): { fprintf(stream, "meter"); return; }
         default:                   { fprintf(stream, "?(%u)", reason); return; }
     }
 }
@@ -724,7 +756,8 @@ ofl_flow_removed_reason_print(FILE *stream, uint8_t reason) {
 
 
 char *
-ofl_port_status_reason_to_string(uint8_t reason) {
+ofl_port_status_reason_to_string(uint8_t reason)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -735,7 +768,8 @@ ofl_port_status_reason_to_string(uint8_t reason) {
 }
 
 void
-ofl_port_status_reason_print(FILE *stream, uint8_t reason) {
+ofl_port_status_reason_print(FILE *stream, uint8_t reason)
+{
     switch (reason) {
         case (OFPPR_ADD):  {   fprintf(stream, "add"); return; }
         case (OFPPR_DELETE): { fprintf(stream, "del"); return; }
@@ -747,7 +781,8 @@ ofl_port_status_reason_print(FILE *stream, uint8_t reason) {
 
 
 char *
-ofl_flow_mod_command_to_string(uint8_t command) {
+ofl_flow_mod_command_to_string(uint8_t command)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -758,7 +793,8 @@ ofl_flow_mod_command_to_string(uint8_t command) {
 }
 
 void
-ofl_flow_mod_command_print(FILE *stream, uint8_t command) {
+ofl_flow_mod_command_print(FILE *stream, uint8_t command)
+{
     switch (command) {
         case (OFPFC_ADD):  {           fprintf(stream, "add"); return; }
         case (OFPFC_MODIFY):  {        fprintf(stream, "mod"); return; }
@@ -772,7 +808,8 @@ ofl_flow_mod_command_print(FILE *stream, uint8_t command) {
 
 
 char *
-ofl_group_mod_command_to_string(uint16_t command) {
+ofl_group_mod_command_to_string(uint16_t command)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -783,7 +820,8 @@ ofl_group_mod_command_to_string(uint16_t command) {
 }
 
 void
-ofl_group_mod_command_print(FILE *stream, uint16_t command) {
+ofl_group_mod_command_print(FILE *stream, uint16_t command)
+{
     switch(command) {
         case (OFPGC_ADD): {    fprintf(stream, "add"); return; }
         case (OFPGC_MODIFY): { fprintf(stream, "mod"); return; }
@@ -793,7 +831,8 @@ ofl_group_mod_command_print(FILE *stream, uint16_t command) {
 }
 
 char *
-ofl_meter_mod_command_to_string(uint16_t command) {
+ofl_meter_mod_command_to_string(uint16_t command)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -804,17 +843,19 @@ ofl_meter_mod_command_to_string(uint16_t command) {
 }
 
 void
-ofl_meter_mod_command_print(FILE *stream, uint16_t command){
+ofl_meter_mod_command_print(FILE *stream, uint16_t command)
+{
 	switch(command){
 		case (OFPMC_ADD): {    fprintf(stream, "add"); return; }
 		case (OFPMC_MODIFY): { fprintf(stream, "mod"); return; }
-		case (OFPMC_DELETE): { fprintf(stream, "del"); return; } 
-		default: { fprintf(stream, "?(%u)", command); return;}			
+		case (OFPMC_DELETE): { fprintf(stream, "del"); return; }
+		default: { fprintf(stream, "?(%u)", command); return;}
 	}
 }
 
 char *
-ofl_meter_band_type_to_string(uint16_t type) {
+ofl_meter_band_type_to_string(uint16_t type)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -825,18 +866,20 @@ ofl_meter_band_type_to_string(uint16_t type) {
 }
 
 void
-ofl_meter_band_type_print(FILE *stream, uint16_t type) {
+ofl_meter_band_type_print(FILE *stream, uint16_t type)
+{
     switch (type) {
         case OFPMBT_DROP:        {    fprintf(stream, "drop"); return; }
         case OFPMBT_DSCP_REMARK: {    fprintf(stream, "dscp_remark"); return; }
-        case OFPMBT_EXPERIMENTER: {    fprintf(stream, "exp"); return; }  
+        case OFPMBT_EXPERIMENTER: {    fprintf(stream, "exp"); return; }
         default: {                   fprintf(stream, "?(%u)", type); return; }
-    }              
-}        
+    }
+}
 
 
 char *
-ofl_group_type_to_string(uint8_t type) {
+ofl_group_type_to_string(uint8_t type)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -847,7 +890,8 @@ ofl_group_type_to_string(uint8_t type) {
 }
 
 void
-ofl_group_type_print(FILE *stream, uint8_t type) {
+ofl_group_type_print(FILE *stream, uint8_t type)
+{
     switch(type) {
         case (OFPGT_ALL):      { fprintf(stream, "all"); return; }
         case (OFPGT_SELECT):   { fprintf(stream, "sel"); return; }
@@ -858,7 +902,8 @@ ofl_group_type_print(FILE *stream, uint8_t type) {
 }
 
 char *
-ofl_stats_type_to_string(uint16_t type) {
+ofl_stats_type_to_string(uint16_t type)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -868,7 +913,8 @@ ofl_stats_type_to_string(uint16_t type) {
 }
 
 void
-ofl_stats_type_print(FILE *stream, uint16_t type) {
+ofl_stats_type_print(FILE *stream, uint16_t type)
+{
     switch (type) {
         case (OFPMP_DESC):          { fprintf(stream, "desc"); return; }
         case (OFPMP_FLOW):          { fprintf(stream, "flow"); return; }
@@ -883,14 +929,15 @@ ofl_stats_type_print(FILE *stream, uint16_t type) {
         case (OFPMP_METER):         { fprintf(stream, "mstats"); return; }
         case (OFPMP_METER_CONFIG):  { fprintf(stream, "mconf"); return; }
         case (OFPMP_METER_FEATURES):{ fprintf(stream, "mfeat"); return; }
-        case (OFPMP_PORT_DESC):     { fprintf(stream, "port-desc"); return; }   
+        case (OFPMP_PORT_DESC):     { fprintf(stream, "port-desc"); return; }
         case (OFPMP_EXPERIMENTER):  { fprintf(stream, "exp"); return; }
         default: {                    fprintf(stream, "?(%u)", type); return; }
     }
 }
 
-void 
-ofl_properties_type_print(FILE *stream, uint16_t type){
+void
+ofl_properties_type_print(FILE *stream, uint16_t type)
+{
     switch(type){
         case (OFPTFPT_INSTRUCTIONS):        { fprintf(stream, "instructions"); return; }
         case (OFPTFPT_INSTRUCTIONS_MISS):   { fprintf(stream, "instructions_miss"); return; }
@@ -908,104 +955,108 @@ ofl_properties_type_print(FILE *stream, uint16_t type){
         case (OFPTFPT_APPLY_SETFIELD_MISS):{ fprintf(stream, "apply_setfield_miss"); return; }
         case (OFPTFPT_EXPERIMENTER):        { fprintf(stream, "experimenter"); return; }
         case (OFPTFPT_EXPERIMENTER_MISS):   { fprintf(stream, "experimenter_miss"); return; }
-        default: {                            fprintf(stream, "?(%u)", type); return; }            
+        default: {                            fprintf(stream, "?(%u)", type); return; }
     }
 }
 
 
 void
-ofl_async_packet_in(FILE *stream, uint32_t packet_in_mask){
+ofl_async_packet_in(FILE *stream, uint32_t packet_in_mask)
+{
     bool e = false;
 
     fprintf(stream, "packet_in(" );
     if(packet_in_mask &  (1 << 0)){
        fprintf(stream, "no_match");
-       e = true; 
+       e = true;
     }
     if(packet_in_mask & ((1 << 1))){
         if(e)
             fprintf(stream,", ");
         fprintf(stream, "action");
-        e = true;  
+        e = true;
     }
     if(packet_in_mask & ((1 << 2))){
         if(e)
-            fprintf(stream,", ");    
+            fprintf(stream,", ");
         fprintf(stream, "invalid_ttl");
         e = true;
     }
     if (!e)
-        fprintf(stream, "none"); 
+        fprintf(stream, "none");
     fprintf(stream, ")" );
 }
 
 void
-ofl_async_port_status(FILE *stream, uint32_t port_status_mask){
+ofl_async_port_status(FILE *stream, uint32_t port_status_mask)
+{
     bool e = false;
-    
+
     fprintf(stream, "port_status(" );
     if(port_status_mask&  (1 << 0)){
         fprintf(stream, "add");
-        e = true;   
-    }    
+        e = true;
+    }
     if(port_status_mask & ((1 << 1))){
         if(e)
-            fprintf(stream,", ");        
-        fprintf(stream, "delete"); 
+            fprintf(stream,", ");
+        fprintf(stream, "delete");
         e = true;
-    }               
+    }
     if(port_status_mask & ((1 << 2))){
         if(e)
-            fprintf(stream,", ");     
+            fprintf(stream,", ");
         fprintf(stream, "modify");
         e = true;
     }
     if (!e)
         fprintf(stream, "none");
-     fprintf(stream, ")" );            
+     fprintf(stream, ")" );
 }
 
 void
-ofl_async_flow_removed(FILE *stream, uint32_t flow_rem_mask){
+ofl_async_flow_removed(FILE *stream, uint32_t flow_rem_mask)
+{
     bool e = false;
-    
-    fprintf(stream, "flow_removed(" );    
+
+    fprintf(stream, "flow_removed(" );
     if(flow_rem_mask &  (1 << 0)){
         fprintf(stream, "idle_timeout");
-        e = true;   
-    }        
+        e = true;
+    }
     if(flow_rem_mask & ((1 << 1))){
         if(e)
-            fprintf(stream,", ");      
-        fprintf(stream, "hard_timeout"); 
-        e = true;           
+            fprintf(stream,", ");
+        fprintf(stream, "hard_timeout");
+        e = true;
     }
     if(flow_rem_mask & ((1 << 2))){
         if(e)
-            fprintf(stream,", ");      
+            fprintf(stream,", ");
         fprintf(stream, "delete");
         e = true;
-    }        
+    }
     if(flow_rem_mask & ((1 << 3))){
         if(e)
-            fprintf(stream,", ");        
+            fprintf(stream,", ");
         fprintf(stream, "group delete");
         e = true;
-     }   
+     }
     if(flow_rem_mask & ((1 << 4))){
         if(e)
-            fprintf(stream,", ");       
-        fprintf(stream, "meter delete");        
+            fprintf(stream,", ");
+        fprintf(stream, "meter delete");
         e = true;
     }
     if (!e)
-        fprintf(stream, "none"); 
+        fprintf(stream, "none");
 
-    fprintf(stream, ")" );          
+    fprintf(stream, ")" );
 }
 
 char *
-ofl_hex_to_string(uint8_t *buf, size_t buf_size) {
+ofl_hex_to_string(uint8_t const *buf, size_t buf_size)
+{
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -1015,7 +1066,8 @@ ofl_hex_to_string(uint8_t *buf, size_t buf_size) {
 }
 
 void
-ofl_hex_print(FILE *stream, uint8_t *buf, size_t buf_size) {
+ofl_hex_print(FILE *stream, uint8_t const *buf, size_t buf_size)
+{
     size_t i;
     size_t lines = 0;
 

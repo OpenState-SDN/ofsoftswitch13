@@ -90,55 +90,55 @@ typedef uint32_t ofl_err;
 
 /* Callback functions for handling experimenter actions. */
 struct ofl_exp_act {
-    int     (*pack)             (struct ofl_action_header *src, struct ofp_action_header *dst);
-    ofl_err (*unpack)           (struct ofp_action_header *src, size_t *len, struct ofl_action_header **dst);
+    int     (*pack)             (struct ofl_action_header const *src, struct ofp_action_header *dst);
+    ofl_err (*unpack)           (struct ofp_action_header const *src, size_t *len, struct ofl_action_header **dst);
     int     (*free)             (struct ofl_action_header *act);
-    size_t  (*ofp_len)          (struct ofl_action_header *act);
-    char   *(*to_string)        (struct ofl_action_header *act);
+    size_t  (*ofp_len)          (struct ofl_action_header const *act);
+    char   *(*to_string)        (struct ofl_action_header const *act);
 };
 
 /* Callback functions for handling experimenter instructions. */
 struct ofl_exp_inst {
-    int     (*pack)            (struct ofl_instruction_header *src, struct ofp_instruction *dst);
-    ofl_err (*unpack)          (struct ofp_instruction *src, size_t *len, struct ofl_instruction_header **dst);
+    int     (*pack)            (struct ofl_instruction_header const *src, struct ofp_instruction *dst);
+    ofl_err (*unpack)          (struct ofp_instruction const *src, size_t *len, struct ofl_instruction_header **dst);
     int     (*free)            (struct ofl_instruction_header *i);
-    size_t  (*ofp_len)         (struct ofl_instruction_header *i);
-    char   *(*to_string)       (struct ofl_instruction_header *i);
+    size_t  (*ofp_len)         (struct ofl_instruction_header const *i);
+    char   *(*to_string)       (struct ofl_instruction_header const *i);
 };
 
 /* Callback functions for handling experimenter match structures. */
 struct ofl_exp_match {
-    int     (*pack)           (struct ofl_match_header *src, struct ofp_match *dst);
-    ofl_err (*unpack)         (struct ofp_match *src, size_t *len, struct ofl_match_header **dst);
+    int     (*pack)           (struct ofl_match_header const *src, struct ofp_match *dst);
+    ofl_err (*unpack)         (struct ofp_match const *src, size_t *len, struct ofl_match_header **dst);
     int     (*free)           (struct ofl_match_header *m);
-    size_t  (*ofp_len)        (struct ofl_match_header *m);
-    char   *(*to_string)      (struct ofl_match_header *m);
+    size_t  (*ofp_len)        (struct ofl_match_header const *m);
+    char   *(*to_string)      (struct ofl_match_header const *m);
 };
 
 /* Callback functions for handling experimenter statistics. */
 struct ofl_exp_stats {
-    int     (*req_pack)        (struct ofl_msg_multipart_request_header *msg, uint8_t **buf, size_t *buf_len, struct ofl_exp *exp);
-    ofl_err (*req_unpack)      (struct ofp_multipart_request *os, uint8_t* buf, size_t *len, struct ofl_msg_multipart_request_header **msg, struct ofl_exp *exp);
+    int     (*req_pack)        (struct ofl_msg_multipart_request_header const *msg, uint8_t **buf, size_t *buf_len, struct ofl_exp const *exp);
+    ofl_err (*req_unpack)      (struct ofp_multipart_request const *os, uint8_t const * buf, size_t *len, struct ofl_msg_multipart_request_header **msg, struct ofl_exp const *exp);
     int     (*req_free)        (struct ofl_msg_multipart_request_header *msg);
-    char   *(*req_to_string)   (struct ofl_msg_multipart_request_header *msg, struct ofl_exp *exp);
-    int     (*reply_pack)      (struct ofl_msg_multipart_reply_header *msg, uint8_t **buf, size_t *buf_len, struct ofl_exp *exp);
-    ofl_err (*reply_unpack)    (struct ofp_multipart_reply *os, uint8_t* buf, size_t *len, struct ofl_msg_multipart_reply_header **msg, struct ofl_exp *exp);
+    char   *(*req_to_string)   (struct ofl_msg_multipart_request_header const *msg, struct ofl_exp const *exp);
+    int     (*reply_pack)      (struct ofl_msg_multipart_reply_header const *msg, uint8_t **buf, size_t *buf_len, struct ofl_exp const *exp);
+    ofl_err (*reply_unpack)    (struct ofp_multipart_reply const *os, uint8_t const* buf, size_t *len, struct ofl_msg_multipart_reply_header **msg, struct ofl_exp const *exp);
     int     (*reply_free)      (struct ofl_msg_multipart_reply_header *msg);
-    char   *(*reply_to_string) (struct ofl_msg_multipart_reply_header *msg, struct ofl_exp *exp);
+    char   *(*reply_to_string) (struct ofl_msg_multipart_reply_header const *msg, struct ofl_exp const *exp);
 };
 
 /* Callback functions for handling experimenter messages. */
 struct ofl_exp_msg {
-    int     (*pack)             (struct ofl_msg_experimenter *msg, uint8_t **buf, size_t *buf_len);
-    ofl_err (*unpack)           (struct ofp_header *oh, size_t *len, struct ofl_msg_experimenter **msg);
+    int     (*pack)             (struct ofl_msg_experimenter const *msg, uint8_t **buf, size_t *buf_len);
+    ofl_err (*unpack)           (struct ofp_header const *oh, size_t *len, struct ofl_msg_experimenter **msg);
     int     (*free)             (struct ofl_msg_experimenter *msg);
-    char   *(*to_string)        (struct ofl_msg_experimenter *msg);
+    char   *(*to_string)        (struct ofl_msg_experimenter const *msg);
 };
 
 /* Callback functions for handling experimenter match fields. */
 struct ofl_exp_field {
-    void    (*pack)             (struct ofpbuf *buf, struct ofl_match_tlv *oft);
-    int     (*unpack)           (struct ofl_match *match, struct oxm_field *f, void *experimenter_id, void *value, void *mask);
+    void    (*pack)             (struct ofpbuf *buf, struct ofl_match_tlv const *oft);
+    int     (*unpack)           (struct ofl_match *match, struct oxm_field const *f, void const *experimenter_id, void const *value, void const *mask);
     void    (*match)            (struct ofl_match_tlv *f, int *packet_header, int  *field_len, uint8_t **flow_val, uint8_t **flow_mask);
     void    (*compare)          (struct ofl_match_tlv *f, struct ofl_match_tlv *value, uint8_t **packet_val);
     void    (*match_std)        (struct ofl_match_tlv *flow_mod_match, struct ofl_match_tlv *flow_entry_match, int *field_len, uint8_t **flow_mod_val, uint8_t **flow_entry_val, uint8_t **flow_mod_mask, uint8_t **flow_entry_mask);
@@ -161,11 +161,13 @@ struct ofl_exp {
 /* OFL_ERROR should be returned as ofl_err, when there was an error, but
  * there is no appropriate OpenFlow error type defined, or when no error
  * message should be generated because of the error. */
+
 #define OFL_ERROR 0xffffffff
 
 /* Creates an ofl_err from an OpenFlow error type and code */
 static inline ofl_err
-ofl_error(uint16_t type, uint16_t code) {
+ofl_error(uint16_t type, uint16_t code)
+{
     /* NOTE: highest bit is always set to one, so no error value is zero */
     uint32_t ret = type;
     return 0x80000000 | ret << 16 | code;
@@ -173,13 +175,15 @@ ofl_error(uint16_t type, uint16_t code) {
 
 /* Returns the error type of an ofl_err */
 static inline uint16_t
-ofl_error_type(ofl_err error) {
+ofl_error_type(ofl_err error)
+{
     return (0x7fff0000 & error) >> 16;
 }
 
 /* Returns the error code of an ofl_err */
 static inline uint16_t
-ofl_error_code(ofl_err error) {
+ofl_error_code(ofl_err error)
+{
     return error & 0x0000ffff;
 }
 
