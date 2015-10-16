@@ -2988,7 +2988,7 @@ set_table_features_match(struct vconn *vconn, int argc, char *argv[]) {
     {
       int features_len;
       printf("\nJII table-num:%zu\n", table_feat->tables_num);
-      features_len = ofl_structs_table_features_ofp_total_len(table_feat->table_features, table_feat->tables_num, NULL);
+      features_len = ofl_structs_table_features_ofp_total_len((struct ofl_table_features const **)table_feat->table_features, table_feat->tables_num, NULL);
       printf("\nJII features_len:%d\n", features_len);
     }
 

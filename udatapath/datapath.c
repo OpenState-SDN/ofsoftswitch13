@@ -162,7 +162,8 @@ dp_new(void) {
 
     dp->id = gen_datapath_id();
 
-    dp->global_states = NULL;
+    // FIXME global_states is not a pointer (NULL)?
+    dp->global_states = 0;
 
     dp->generation_id = -1;
 
@@ -625,7 +626,7 @@ dp_handle_set_desc(struct datapath *dp, struct ofl_exp_openflow_msg_set_dp_desc 
 static ofl_err
 dp_check_generation_id(struct datapath *dp, uint64_t new_gen_id){
 
-    if(dp->generation_id >= 0  && ((int64_t)(new_gen_id - dp->generation_id) < 0) ){        
+    if(dp->generation_id >= 0  && ((int64_t)(new_gen_id - dp->generation_id) < 0) ){
         return ofl_error(OFPET_ROLE_REQUEST_FAILED, OFPRRFC_STALE);
     }
     else dp->generation_id = new_gen_id;
@@ -637,7 +638,7 @@ ofl_err
 dp_handle_role_request(struct datapath *dp, struct ofl_msg_role_request *msg,
                                             const struct sender *sender) {
     uint32_t role = msg->role;
-    uint64_t generation_id = msg->generation_id; 
+    uint64_t generation_id = msg->generation_id;
     switch (msg->role) {
         case OFPCR_ROLE_NOCHANGE:{
             role = sender->remote->role;
@@ -678,7 +679,7 @@ dp_handle_role_request(struct datapath *dp, struct ofl_msg_role_request *msg,
             return ofl_error(OFPET_ROLE_REQUEST_FAILED, OFPRRFC_BAD_ROLE);
         }
     }
-    
+
     {
     struct ofl_msg_role_request reply =
         {{.type = OFPT_ROLE_REPLY},
