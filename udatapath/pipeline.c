@@ -157,14 +157,12 @@ pipeline_process_packet(struct pipeline *pl, struct packet *pkt) {
 		if (state_table_is_stateful(table->state_table) && state_table_is_configured(table->state_table)) {
             state_entry = state_table_lookup(table->state_table, pkt);
             if(state_entry!=NULL){
-		ofl_structs_match_exp_put32(&pkt->handle_std->match, OXM_EXP_STATE, 0xBEBABEBA, 0x00000000);
-		pkt->handle_std->valid = true;
+		        ofl_structs_match_exp_put32(&pkt->handle_std->match, OXM_EXP_STATE, 0xBEBABEBA, 0x00000000);
                 state_table_write_state(state_entry, pkt);
             }
 		}
 
-
-        //add 'flags' virtual header field
+        //set 'flags' virtual header field value
         HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv,
             hmap_node, hash_int(OXM_EXP_FLAGS,0), &pkt->handle_std->match.match_fields){
                     uint32_t *flags = (uint32_t*) (f->value + EXP_ID_LEN);

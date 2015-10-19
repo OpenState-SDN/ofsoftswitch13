@@ -60,22 +60,50 @@ packet_handle_std_validate(struct packet_handle_std *handle) {
         struct ofl_match *m = &handle->match;
         struct protocols_std *proto = handle->proto;
         uint64_t current_metadata;
+        uint32_t current_state;
+        uint32_t current_global_state = OFP_GLOBAL_STATES_DEFAULT;
+        uint64_t current_tunnel_id;
         struct ofl_match_tlv *field;
         size_t offset = 0;
         uint8_t next_proto = 0;
+        bool has_state = false;
 
         handle->valid = true;
 
         protocol_reset(handle->proto);
-        ofl_structs_match_init(m);
-
-        m->header.type = OFPMT_OXM;
-        ofl_structs_match_put32(m, OXM_OF_IN_PORT, pkt->in_port);
         HMAP_FOR_EACH_WITH_HASH(field, struct ofl_match_tlv, hmap_node,
             hash_int(OXM_OF_METADATA,0), & m->match_fields){
             current_metadata = (uint64_t) *field->value;
-            ofl_structs_match_put64(m, OXM_OF_METADATA, current_metadata);
         }
+
+        HMAP_FOR_EACH_WITH_HASH(field, struct ofl_match_tlv, hmap_node, 
+            hash_int(OXM_EXP_STATE,0), & m->match_fields){
+            current_state = (uint32_t) *(field->value + EXP_ID_LEN);
+            has_state = true;
+        }
+
+        HMAP_FOR_EACH_WITH_HASH(field, struct ofl_match_tlv, hmap_node, 
+            hash_int(OXM_EXP_FLAGS,0), & m->match_fields){
+            current_global_state = (uint32_t) *(field->value + EXP_ID_LEN);
+        }
+
+        HMAP_FOR_EACH_WITH_HASH(field, struct ofl_match_tlv, hmap_node, 
+            hash_int(OXM_OF_TUNNEL_ID,0), & m->match_fields){
+            current_tunnel_id = (uint64_t) *field->value;
+        }
+
+        ofl_structs_match_init(m);
+
+        m->header.type = OFPMT_OXM;
+        ofl_structs_match_put32(m, OXM_OF_IN_PORT, pkt->in_port);        
+        ofl_structs_match_put64(m, OXM_OF_METADATA, current_metadata);
+        ofl_structs_match_put64(&handle->match,  OXM_OF_TUNNEL_ID, current_tunnel_id);
+        ofl_structs_match_exp_put32(&handle->match, OXM_EXP_FLAGS, 0xBEBABEBA, current_global_state);
+        if(has_state)
+        {
+            ofl_structs_match_exp_put32(&handle->match, OXM_EXP_STATE, 0xBEBABEBA, current_state);
+        }
+        
         /* Ethernet */
 
         if (pkt->buffer->size < offset + sizeof(struct eth_header)) {
