@@ -207,13 +207,13 @@ state_table_lookup(struct state_table*, struct packet *);
 void 
 state_table_write_state(struct state_entry *, struct packet *);
 
-void 
+ofl_err 
 state_table_set_state(struct state_table *, struct packet *, struct ofl_exp_set_flow_state *msg, struct ofl_exp_action_set_state *act);
 
-void 
+ofl_err 
 state_table_set_extractor(struct state_table *, struct key_extractor *, int);
 
-void 
+ofl_err 
 state_table_del_state(struct state_table *, uint8_t *, uint32_t);
 
 void
@@ -296,6 +296,15 @@ ofl_exp_openstate_field_overlap_a (struct ofl_match_tlv *f_a, int *field_len, ui
 
 void
 ofl_exp_openstate_field_overlap_b (struct ofl_match_tlv *f_b, int *field_len, uint8_t **val_b, uint8_t **mask_b, uint64_t *all_mask);
+
+void
+ofl_exp_openstate_error_pack (struct ofl_msg_exp_error *msg, uint8_t **buf, size_t *buf_len);
+
+void 
+ofl_exp_openstate_error_free (struct ofl_msg_exp_error *msg);
+
+char *
+ofl_exp_openstate_error_to_string(struct ofl_msg_exp_error *msg);
 
 /* Handles a state_mod message */
 ofl_err

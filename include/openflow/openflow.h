@@ -1511,7 +1511,6 @@ enum ofp_error_type {
     OFPET_ROLE_REQUEST_FAILED = 11,  /* Controller Role request failed. */
     OFPET_METER_MOD_FAILED = 12,     /* Error in meter. */
     OFPET_TABLE_FEATURES_FAILED = 13, /* Setting table features failed. */
-    OFPET_STATE_MOD_FAILED=14,
     OFPET_EXPERIMENTER = 0xffff      /* Experimenter error messages. */
 };
 

@@ -66,6 +66,18 @@ enum ofp_exp_messages {
     OFPT_EXP_STATE_MOD
 };
 
+/*EXPERIMENTER ERROR MESSAGES*/
+enum ofp_exp_openstate_errors{
+    OFPEC_EXP_STATE_MOD_FAILED,
+    OFPEC_EXP_SET_EXTRACTOR,
+    OFPEC_EXP_SET_FLOW_STATE,
+    OFPEC_EXP_DEL_FLOW_STATE,
+    OFPEC_EXP_SET_STATE_ACT,
+    OFPEC_BAD_EXP_MESSAGE,
+    OFPEC_BAD_EXP_LEN,
+    OFPEC_BAD_TABLE_ID
+};
+
 /****************************************************************
  *
  *   OFPT_EXP_STATE_MOD

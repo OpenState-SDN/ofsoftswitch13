@@ -125,6 +125,11 @@ static struct ofl_exp_field dp_exp_field =
          .overlap_a  = ofl_exp_field_overlap_a,
          .overlap_b  = ofl_exp_field_overlap_b};
 
+/* Callbacks for processing experimenter errors in OFLib. */
+static struct ofl_exp_err dp_exp_err =
+        {.pack      = ofl_exp_err_pack,
+         .free      = ofl_exp_err_free,
+         .to_string = ofl_exp_err_to_string};
 
 static struct ofl_exp dp_exp =
         {.act   = &dp_exp_act,
@@ -132,7 +137,8 @@ static struct ofl_exp dp_exp =
          .match = NULL,
          .stats = &dp_exp_statistics,
          .msg   = &dp_exp_msg,
-         .field = &dp_exp_field};
+         .field = &dp_exp_field,
+         .err   = &dp_exp_err};
 
 /* Generates and returns a random datapath id. */
 static uint64_t
@@ -312,19 +318,32 @@ remote_rconn_run(struct datapath *dp, struct remote *r, uint8_t conn_id) {
                 if (!error) {
                     error = handle_control_msg(dp, msg, &sender);
 
-                    if (error) {
+                    if(error) {
                         ofl_msg_free(msg, dp->exp);
                     }
                 }
 
                 if (error) {
-                    struct ofl_msg_error err =
-                            {{.type = OFPT_ERROR},
-                             .type = ofl_error_type(error),
-                             .code = ofl_error_code(error),
-                             .data_length = buffer->size,
-                             .data        = buffer->data};
-                    dp_send_message(dp, (struct ofl_msg_header *)&err, &sender);
+                    if (ofl_error_type(error)== (OFPET_EXPERIMENTER & 0x7fff)){
+                        //TODO CNIT: now the experimenter id is static to OPENSTATE_VENDOR_ID
+                        struct ofl_msg_exp_error err =
+                                {{.type = OFPT_ERROR},
+                                 .type = ofl_error_type(error),
+                                 .exp_type = ofl_error_code(error),
+                                 .experimenter = OPENSTATE_VENDOR_ID,
+                                 .data_length = buffer->size,
+                                 .data        = buffer->data};
+                        dp_send_message(dp, (struct ofl_msg_header *)&err, &sender);
+                    }
+                    else{
+                        struct ofl_msg_error err =
+                                {{.type = OFPT_ERROR},
+                                 .type = ofl_error_type(error),
+                                 .code = ofl_error_code(error),
+                                 .data_length = buffer->size,
+                                 .data        = buffer->data};
+                        dp_send_message(dp, (struct ofl_msg_header *)&err, &sender);
+                    }
                 }
 
                 ofpbuf_delete(buffer);
@@ -576,7 +595,7 @@ dp_send_message(struct datapath *dp, struct ofl_msg_header *msg,
     uint8_t *buf;
     size_t buf_size;
     int error;
-
+    
     if (VLOG_IS_DBG_ENABLED(LOG_MODULE)) {
         char *msg_str = ofl_msg_to_string(msg, dp->exp);
         VLOG_DBG_RL(LOG_MODULE, &rl, "sending: %.400s", msg_str);
@@ -603,7 +622,7 @@ dp_send_message(struct datapath *dp, struct ofl_msg_header *msg,
         ofpbuf->conn_id = sender->conn_id;
     if (msg->type == OFPT_PACKET_IN)
         ofpbuf->conn_id = PTIN_CONNECTION;
-
+    
     error = send_openflow_buffer(dp, ofpbuf, sender);
     if (error) {
         VLOG_WARN_RL(LOG_MODULE, &rl, "There was an error sending the message!");

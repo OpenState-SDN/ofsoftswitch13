@@ -108,4 +108,13 @@ ofl_exp_field_overlap_a (struct ofl_match_tlv *f_a, int *field_len, uint8_t **va
 void
 ofl_exp_field_overlap_b (struct ofl_match_tlv *f_b, int *field_len, uint8_t **val_b, uint8_t **mask_b, uint64_t *all_mask);
 
+int
+ofl_exp_err_pack(struct ofl_msg_exp_error *msg, uint8_t **buf, size_t *buf_len);
+
+int
+ofl_exp_err_free(struct ofl_msg_exp_error *msg);
+
+char *
+ofl_exp_err_to_string(struct ofl_msg_exp_error *msg);
+
 #endif /* OFL_EXP_H */

@@ -99,13 +99,19 @@ static struct ofl_exp_field ofl_exp_field =
          .overlap_a  = ofl_exp_field_overlap_a,
          .overlap_b  = ofl_exp_field_overlap_b};
 
+static struct ofl_exp_err ofl_exp_err =
+        {.pack       = ofl_exp_err_pack,
+         .free       = ofl_exp_err_free,
+         .to_string  = ofl_exp_err_to_string};
+
 static struct ofl_exp ofl_exp =
         {.act   = &ofl_exp_act,
          .inst  = NULL,
          .match = NULL,
          .stats = &ofl_exp_stats,
          .msg   = &ofl_exp_msg,
-         .field = &ofl_exp_field};
+         .field = &ofl_exp_field,
+         .err   = &ofl_exp_err };
 
 static struct vconn_class *vconn_classes[] = {
     &tcp_vconn_class,
