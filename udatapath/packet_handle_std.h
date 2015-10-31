@@ -52,8 +52,8 @@ struct packet_handle_std {
    bool                        valid; /* Set to true if the handler data is valid.
                                            if false, it is revalidated before
                                            executing any methods. */
-   bool						   table_miss; /*Packet was matched
-   											against table miss flow*/
+   bool			       table_miss; /*Packet was matched
+   					     against table miss flow*/
 };
 
 /* Creates a handler */
