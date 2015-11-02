@@ -61,7 +61,7 @@ static void
 ofl_msg_print_error(struct ofl_msg_error *msg, FILE *stream, struct ofl_exp *exp) {
     int error = 0;
     switch (msg->type) {
-        case (OFPET_EXPERIMENTER & 0x7fff): {
+        case (OFPET_EXPERIMENTER): {
             struct ofl_msg_exp_error *exp_err = (struct ofl_msg_exp_error *) msg;
             if (exp == NULL || exp->err == NULL || exp->err->to_string == NULL) {
                 fprintf(stream, "{id=\"0x%"PRIx32"\"}", exp_err->experimenter);

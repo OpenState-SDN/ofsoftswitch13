@@ -55,7 +55,7 @@ ofl_msg_pack_error(struct ofl_msg_error *msg, uint8_t **buf, size_t *buf_len, st
     
     int error = 0;
     switch (msg->type) {
-        case (OFPET_EXPERIMENTER & 0x7fff): {
+        case (OFPET_EXPERIMENTER): {
             struct ofl_msg_exp_error *exp_err = (struct ofl_msg_exp_error *) msg;
             if (exp == NULL || exp->err == NULL || exp->err->pack == NULL) {
                 OFL_LOG_WARN(LOG_MODULE, "Trying to pack experimenter err message, but no callback was given.");
@@ -67,7 +67,6 @@ ofl_msg_pack_error(struct ofl_msg_error *msg, uint8_t **buf, size_t *buf_len, st
         }
         default: {
             struct ofp_error_msg *err;
-
             *buf_len = sizeof(struct ofp_error_msg) + msg->data_length;
             *buf     = (uint8_t *)malloc(*buf_len);
 

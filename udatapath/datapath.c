@@ -309,41 +309,41 @@ remote_rconn_run(struct datapath *dp, struct remote *r, uint8_t conn_id) {
             if (buffer == NULL) {
                 break;
             } else {
-                struct ofl_msg_header *msg;
-
+                struct ofl_msg_header *msg = NULL;
                 struct sender sender = {.remote = r, .conn_id = conn_id};
 
                 error = ofl_msg_unpack(buffer->data, buffer->size, &msg, &(sender.xid), dp->exp);
 
                 if (!error) {
                     error = handle_control_msg(dp, msg, &sender);
-
-                    if(error) {
-                        ofl_msg_free(msg, dp->exp);
-                    }
                 }
 
                 if (error) {
-                    if (ofl_error_type(error)== (OFPET_EXPERIMENTER & 0x7fff)){
-                        //TODO CNIT: now the experimenter id is static to OPENSTATE_VENDOR_ID
-                        struct ofl_msg_exp_error err =
-                                {{.type = OFPT_ERROR},
-                                 .type = ofl_error_type(error),
-                                 .exp_type = ofl_error_code(error),
-                                 .experimenter = OPENSTATE_VENDOR_ID,
-                                 .data_length = buffer->size,
-                                 .data        = buffer->data};
-                        dp_send_message(dp, (struct ofl_msg_header *)&err, &sender);
-                    }
-                    else{
-                        struct ofl_msg_error err =
-                                {{.type = OFPT_ERROR},
-                                 .type = ofl_error_type(error),
-                                 .code = ofl_error_code(error),
-                                 .data_length = buffer->size,
-                                 .data        = buffer->data};
-                        dp_send_message(dp, (struct ofl_msg_header *)&err, &sender);
-                    }
+                   /* [*] The highest bit of 'error' is always set to one, but on-the-wire we
+                   need full compliance to OF specification: the 'type' of an experimenter
+                   error message must be 0xffff instead of 0x7ffff. */               
+                   if ((ofl_error_type(error) | 0x8000) == OFPET_EXPERIMENTER){
+                       struct ofl_msg_exp_error err =
+                               {{.type = OFPT_ERROR},
+                                .type = ofl_error_type(error) | 0x8000, // [*]
+                                .exp_type = ofl_error_code(error),
+                                .experimenter = ((struct ofl_msg_experimenter *) msg)->experimenter_id,
+                                .data_length = buffer->size,
+                                .data        = buffer->data};
+                       dp_send_message(dp, (struct ofl_msg_header *)&err, &sender);
+                   }
+                   else{
+                       struct ofl_msg_error err =
+                               {{.type = OFPT_ERROR},
+                                .type = ofl_error_type(error),
+                                .code = ofl_error_code(error),
+                                .data_length = buffer->size,
+                                .data        = buffer->data};
+                       dp_send_message(dp, (struct ofl_msg_header *)&err, &sender);
+                   }
+                   if (msg != NULL){
+                        ofl_msg_free(msg, dp->exp);
+                   }
                 }
 
                 ofpbuf_delete(buffer);

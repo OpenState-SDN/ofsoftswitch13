@@ -171,7 +171,7 @@ ofl_exp_openstate_msg_pack(struct ofl_msg_experimenter *msg, uint8_t **buf, size
 ofl_err
 ofl_exp_openstate_msg_unpack(struct ofp_header *oh, size_t *len, struct ofl_msg_experimenter **msg) {
     
-    ofl_err error;
+    ofl_err error = 0;
     struct ofp_experimenter_header *exp_header;
 
     if (*len < sizeof(struct ofp_experimenter_header)) {
@@ -181,95 +181,63 @@ ofl_exp_openstate_msg_unpack(struct ofp_header *oh, size_t *len, struct ofl_msg_
 
     exp_header = (struct ofp_experimenter_header *)oh;
 
+    switch (ntohl(exp_header->exp_type)) {
+        case (OFPT_EXP_STATE_MOD): 
+        {
+            struct ofp_exp_msg_state_mod *sm;
+            struct ofl_exp_msg_state_mod *dm;
 
-    if (ntohl(exp_header->experimenter) == OPENSTATE_VENDOR_ID) {
+            *len -= sizeof(struct ofp_experimenter_header);
 
-        switch (ntohl(exp_header->exp_type)) {
-            case (OFPT_EXP_STATE_MOD): 
-            {
-                struct ofp_exp_msg_state_mod *sm;
-                struct ofl_exp_msg_state_mod *dm;
-                
-                if (*len < sizeof(struct ofp_experimenter_header) + 2*sizeof(uint8_t)) {
-                    OFL_LOG_DBG(LOG_MODULE, "Received STATE_MOD message has invalid length (%zu).", *len);
-                    return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
-                }
+            sm = (struct ofp_exp_msg_state_mod *)exp_header;
+            dm = (struct ofl_exp_msg_state_mod *)malloc(sizeof(struct ofl_exp_msg_state_mod));
 
-                *len -= sizeof(struct ofp_experimenter_header);
+            dm->header.header.experimenter_id = ntohl(exp_header->experimenter);
+            dm->header.type                   = ntohl(exp_header->exp_type);
+            
+            /*2*sizeof(uint8_t) = enum ofp_exp_msg_state_mod_commands + 1 byte of padding*/
+            if (*len < 2*sizeof(uint8_t)) {
+                OFL_LOG_DBG(LOG_MODULE, "Received STATE_MOD message has invalid length (%zu).", *len);
+                return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
+            }
+          
+            dm->command = (enum ofp_exp_msg_state_mod_commands)sm->command;
+            
+            *len -= 2*sizeof(uint8_t);
 
-                sm = (struct ofp_exp_msg_state_mod *)exp_header;
-                dm = (struct ofl_exp_msg_state_mod *)malloc(sizeof(struct ofl_exp_msg_state_mod));
-
-                dm->header.header.experimenter_id = ntohl(exp_header->experimenter);
-                dm->header.type                   = ntohl(exp_header->exp_type);
-                dm->command = (enum ofp_exp_msg_state_mod_commands)sm->command;
-                
-                *len -= 2*sizeof(uint8_t);
-
-                if (dm->command == OFPSC_STATEFUL_TABLE_CONFIG){
+            if (dm->command == OFPSC_STATEFUL_TABLE_CONFIG){
                 error = ofl_structs_stateful_table_config_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
-                    if (error) {
-                        free(dm);
-                        return error;
-                    }
+            }
 
-                }
-
-                else if (dm->command == OFPSC_SET_L_EXTRACTOR || dm->command == OFPSC_SET_U_EXTRACTOR){
+            else if (dm->command == OFPSC_SET_L_EXTRACTOR || dm->command == OFPSC_SET_U_EXTRACTOR){
                 error = ofl_structs_extraction_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
-                    if (error) {
-                        free(dm);
-                        return error;
-                    }
+            }
 
-                }
-
-                else if (dm->command == OFPSC_SET_FLOW_STATE){
+            else if (dm->command == OFPSC_SET_FLOW_STATE){
                 error = ofl_structs_set_flow_state_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
-                    if (error) {
-                        free(dm);
-                        return error;
-                    }
+            } 
 
-                } 
-
-                else if (dm->command == OFPSC_DEL_FLOW_STATE){
+            else if (dm->command == OFPSC_DEL_FLOW_STATE){
                 error = ofl_structs_del_flow_state_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
-                    if (error) {
-                        free(dm);
-                        return error;
-                    }
+            }                 
 
-                }                 
-
-                else if (dm->command == OFPSC_SET_GLOBAL_STATE){
+            else if (dm->command == OFPSC_SET_GLOBAL_STATE){
                 error = ofl_structs_set_global_state_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
-                    if (error) {
-                        free(dm);
-                        return error;
-                    }
-
-                }
-
-                else if (dm->command == OFPSC_RESET_GLOBAL_STATE){
-                // payload is empty
-                }
-
-                (*msg) = (struct ofl_msg_experimenter *)dm;
-                return 0;
             }
 
-            default: {
-                OFL_LOG_DBG(LOG_MODULE, "Trying to unpack unknown Openstate Experimenter message.");
-                return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_MESSAGE);
-            }
+            (*msg) = (struct ofl_msg_experimenter *)dm;
+            return error;
         }
-    } else {
-        OFL_LOG_DBG(LOG_MODULE, "Trying to unpack non-Openstate Experimenter message.");
-        return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_EXPERIMENTER);
+
+        default: {
+            struct ofl_msg_experimenter *dm;
+            dm = (struct ofl_msg_experimenter *)malloc(sizeof(struct ofl_msg_experimenter));
+            dm->experimenter_id = ntohl(exp_header->experimenter);
+            (*msg) = dm;
+            OFL_LOG_DBG(LOG_MODULE, "Trying to unpack unknown Openstate Experimenter message.");
+            return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_MESSAGE);
+        }
     }
-    free(msg);
-    return 0;
 }
 
 int
@@ -1629,6 +1597,7 @@ handle_state_mod(struct pipeline *pl, struct ofl_exp_msg_state_mod *msg,
         default:
             return ofl_error(OFPET_EXPERIMENTER, OFPEC_EXP_STATE_MOD_FAILED);
     }
+    ofl_msg_free((struct ofl_msg_header *)msg, pl->dp->exp);
     return 0;
 }
 

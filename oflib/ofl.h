@@ -174,7 +174,9 @@ struct ofl_exp {
 /* Creates an ofl_err from an OpenFlow error type and code */
 static inline ofl_err
 ofl_error(uint16_t type, uint16_t code) {
-    /* NOTE: highest bit is always set to one, so no error value is zero */
+    /* NOTE: highest bit is always set to one, so no error value is zero.
+     Otherwise ofl_error(OFPET_HELLO_FAILED,OFPHFC_INCOMPATIBLE) would be
+     confused with a return code 0! */
     uint32_t ret = type;
     return 0x80000000 | ret << 16 | code;
 }
