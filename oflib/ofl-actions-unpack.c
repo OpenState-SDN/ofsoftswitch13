@@ -338,6 +338,7 @@ ofl_actions_unpack(struct ofp_action_header *src, size_t *len, struct ofl_action
             }
             error = exp->act->unpack(src, len, dst);
             if (error) {
+                (*dst)->type = (enum ofp_action_type)ntohs(src->type);
                 return error;
             }
             break;

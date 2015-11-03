@@ -462,14 +462,13 @@ ofl_msg_unpack_flow_mod(struct ofp_header *src,uint8_t* buf, size_t *len, struct
     match_pos = sizeof(struct ofp_flow_mod) - 4;
     error = ofl_structs_match_unpack(&(sm->match), buf + match_pos, len, &(dm->match), 1, exp);
     if (error) {
-        free(dm);
+        *msg = (struct ofl_msg_header *)dm;
         return error;
     }
     
     error = ofl_utils_count_ofp_instructions((struct ofp_instruction *)(buf + ROUND_UP(match_pos + dm->match->length,8)), *len, &dm->instructions_num);
     if (error) {
-        ofl_structs_free_match(dm->match, exp);
-        free(dm);
+        *msg = (struct ofl_msg_header *)dm;
         return error;
     }
         
@@ -478,10 +477,7 @@ ofl_msg_unpack_flow_mod(struct ofp_header *src,uint8_t* buf, size_t *len, struct
     for (i = 0; i < dm->instructions_num; i++) {
         error = ofl_structs_instructions_unpack(inst, len, &(dm->instructions[i]), exp);
         if (error) {
-            OFL_UTILS_FREE_ARR_FUN2(dm->instructions, i,
-                    ofl_structs_free_instruction, exp);
-            ofl_structs_free_match(dm->match, exp);
-            free(dm);
+            *msg = (struct ofl_msg_header *)dm;
             return error;
         }
         inst = (struct ofp_instruction *)((uint8_t *)inst + ntohs(inst->len));
@@ -1717,6 +1713,7 @@ ofl_msg_unpack(uint8_t *buf, size_t buf_len, struct ofl_msg_header **msg, uint32
             OFL_LOG_DBG(LOG_MODULE, "\n%s\n", str);
             free(str);
         }
+        (*msg)->type = (enum ofp_type)oh->type;
         return error;
     }
 

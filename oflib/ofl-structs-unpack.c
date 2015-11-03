@@ -129,7 +129,9 @@ ofl_structs_instructions_unpack(struct ofp_instruction *src, size_t *len, struct
 
             error = ofl_utils_count_ofp_actions((uint8_t *)si->actions, ilen, &di->actions_num);
             if (error) {
-                free(di);
+                inst = (struct ofl_instruction_header *)di;
+                inst->type = (enum ofp_instruction_type)ntohs(src->type);
+                (*dst) = inst;
                 return error;
             }
             di->actions = (struct ofl_action_header **)malloc(di->actions_num * sizeof(struct ofl_action_header *));
@@ -138,10 +140,9 @@ ofl_structs_instructions_unpack(struct ofp_instruction *src, size_t *len, struct
             for (i = 0; i < di->actions_num; i++) {
                 error = ofl_actions_unpack(act, &ilen, &(di->actions[i]), exp);
                 if (error) {
-                    *len = *len - ntohs(src->len) + ilen;
-                    OFL_UTILS_FREE_ARR_FUN2(di->actions, i,
-                                            ofl_actions_free, exp);
-                    free(di);
+                    inst = (struct ofl_instruction_header *)di;
+                    inst->type = (enum ofp_instruction_type)ntohs(src->type);
+                    (*dst) = inst;
                     return error;
                 }
                 act = (struct ofp_action_header *)((uint8_t *)act + ntohs(act->len));

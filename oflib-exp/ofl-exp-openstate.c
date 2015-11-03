@@ -311,13 +311,17 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
             {
                 struct ofp_exp_action_set_state *sa;
                 struct ofl_exp_action_set_state *da;
-                if (*len < sizeof(struct ofp_exp_action_set_state)) {
-                    OFL_LOG_DBG(LOG_MODULE, "Received SET STATE action has invalid length (%zu).", *len);
-                    return ofl_error(OFPET_BAD_ACTION, OFPBRC_BAD_LEN);
-                }
+
                 sa = (struct ofp_exp_action_set_state *)ext;
                 da = (struct ofl_exp_action_set_state *)malloc(sizeof(struct ofl_exp_action_set_state));
+                da->header.header.experimenter_id = ntohl(exp->experimenter);
+                da->header.act_type = ntohl(ext->act_type);
 
+                if (*len < sizeof(struct ofp_exp_action_set_state)) {
+                    OFL_LOG_DBG(LOG_MODULE, "Received SET STATE action has invalid length (%zu).", *len);
+                    *dst = (struct ofl_action_header *)da;
+                    return ofl_error(OFPET_EXPERIMENTER, OFPEC_EXP_SET_STATE_ACT);
+                }
 
                 if (sa->table_id >= PIPELINE_TABLES) {
                     if (OFL_LOG_IS_WARN_ENABLED(LOG_MODULE)) {
@@ -325,12 +329,10 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
                         OFL_LOG_DBG(LOG_MODULE, "Received SET STATE action has invalid table_id (%s).", ts);
                         free(ts);
                     }
-                    free(da);
-                    return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_TABLE_ID);
+                    *dst = (struct ofl_action_header *)da;
+                    return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_TABLE_ID);
                 }
 
-                da->header.header.experimenter_id = ntohl(exp->experimenter);
-                da->header.act_type = ntohl(ext->act_type);
                 da->state = ntohl(sa->state);
                 da->state_mask = ntohl(sa->state_mask);
                 da->table_id = sa->table_id;
@@ -347,16 +349,19 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
             case (OFPAT_EXP_SET_FLAG): 
             {
                 struct ofp_exp_action_set_flag *sa;
-                struct ofl_exp_action_set_flag *da;
-                if (*len < sizeof(struct ofp_exp_action_set_flag)) {
-                    OFL_LOG_DBG(LOG_MODULE, "Received SET FLAG action has invalid length (%zu).", *len);
-                    return ofl_error(OFPET_BAD_ACTION, OFPBRC_BAD_LEN);
-                }
+                struct ofl_exp_action_set_flag *da;              
                 sa = (struct ofp_exp_action_set_flag*)ext;
                 da = (struct ofl_exp_action_set_flag *)malloc(sizeof(struct ofl_exp_action_set_flag));
 
                 da->header.header.experimenter_id = ntohl(exp->experimenter);
                 da->header.act_type = ntohl(ext->act_type);
+
+                if (*len < sizeof(struct ofp_exp_action_set_flag)) {
+                    OFL_LOG_DBG(LOG_MODULE, "Received SET FLAG action has invalid length (%zu).", *len);
+                    *dst = (struct ofl_action_header *)da;
+                    return ofl_error(OFPET_EXPERIMENTER, OFPEC_EXP_SET_FLAG_ACT);
+                }
+
                 da->flag = ntohl(sa->flag);
                 da->flag_mask = ntohl(sa->flag_mask);
 
@@ -939,10 +944,10 @@ ofl_exp_openstate_field_unpack(struct ofl_match *match, struct oxm_field *f, voi
             return 0;
         }
         case OFI_OXM_EXP_STATE_W:{
-            if (check_bad_wildcard32(ntohl(*((uint32_t*) value)), ntohl(*((uint32_t*) mask)))){
-                return ofp_mkerr(OFPET_BAD_MATCH, OFPBMC_BAD_WILDCARDS);
-            }
             ofl_structs_match_exp_put32m(match, f->header, ntohl(*((uint32_t*) experimenter_id)), ntohl(*((uint32_t*) value)), ntohl(*((uint32_t*) mask)));
+            if (check_bad_wildcard32(ntohl(*((uint32_t*) value)), ntohl(*((uint32_t*) mask)))){
+                return ofp_mkerr(OFPET_EXPERIMENTER, OFPEC_BAD_MATCH_WILDCARD);
+            }
             return 0;
         }
         case OFI_OXM_EXP_FLAGS:{
@@ -950,10 +955,10 @@ ofl_exp_openstate_field_unpack(struct ofl_match *match, struct oxm_field *f, voi
             return 0;
         }
         case OFI_OXM_EXP_FLAGS_W:{
-            if (check_bad_wildcard32(ntohl(*((uint32_t*) value)), ntohl(*((uint32_t*) mask)))){
-                return ofp_mkerr(OFPET_BAD_MATCH, OFPBMC_BAD_WILDCARDS);
-            }
             ofl_structs_match_exp_put32m(match, f->header, ntohl(*((uint32_t*) experimenter_id)), ntohl(*((uint32_t*) value)), ntohl(*((uint32_t*) mask)));
+            if (check_bad_wildcard32(ntohl(*((uint32_t*) value)), ntohl(*((uint32_t*) mask)))){
+                return ofp_mkerr(OFPET_EXPERIMENTER, OFPEC_BAD_MATCH_WILDCARD);
+            }
             return 0;
         }
         default:
@@ -2314,4 +2319,60 @@ ofl_structs_match_exp_put64m(struct ofl_match *match, uint32_t header, uint32_t 
     memcpy(m->value + EXP_ID_LEN + len, &mask, len);
     hmap_insert(&match->match_fields,&m->hmap_node,hash_int(header, 0));
     match->header.length += EXP_ID_LEN + len*2 + 4;
+}
+
+uint32_t
+get_experimenter_id(struct ofl_msg_header *msg){
+    uint32_t exp_id;
+    /*check if the msg that triggers the err is experimenter*/
+    if (msg->type == OFPT_EXPERIMENTER){
+        exp_id = ((struct ofl_msg_experimenter *) msg)->experimenter_id;
+    }
+    /*if not, the error is triggered by an experimenter match/action*/
+    else if(msg->type == OFPT_FLOW_MOD) {
+        struct ofl_msg_flow_mod *flow_mod = (struct ofl_msg_flow_mod *)msg;
+        struct ofl_match_header *flow_mod_match = flow_mod->match;
+
+        exp_id = get_experimenter_id_from_match((struct ofl_match*)flow_mod_match);
+        if(!exp_id){
+            int i;
+            for(i=0; i<flow_mod->instructions_num; i++){
+                struct ofl_instruction_header *inst = flow_mod->instructions[i];
+                switch(inst->type) {
+                    case (OFPIT_WRITE_ACTIONS):
+                    case (OFPIT_APPLY_ACTIONS): {
+                        struct ofl_instruction_actions *act = (struct ofl_instruction_actions *)inst;
+                        exp_id = get_experimenter_id_from_action(act);
+                    }
+                }
+            }
+        }
+    }
+    return exp_id;
+}
+
+
+uint32_t 
+get_experimenter_id_from_match(struct ofl_match *flow_mod_match){
+    struct ofl_match_tlv *f;
+    HMAP_FOR_EACH(f, struct ofl_match_tlv, hmap_node, &flow_mod_match->match_fields){
+        switch (OXM_VENDOR(f->header))
+        {
+            case(OFPXMC_EXPERIMENTER):
+                return *((uint32_t*) (f->value));   
+        }
+
+    }
+    return 0;
+}
+
+uint32_t 
+get_experimenter_id_from_action(struct ofl_instruction_actions *act){
+    int j;
+    for(j=0; j<act->actions_num; j++) {
+        struct ofl_action_header *action = act->actions[j];
+        if (action->type == OFPAT_EXPERIMENTER) {
+           return ((struct ofl_action_experimenter *)action)->experimenter_id;
+        }
+    }
 }

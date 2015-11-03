@@ -372,7 +372,7 @@ ofl_exp_stats_reply_free (struct ofl_msg_multipart_reply_header *msg){
 
 void
 ofl_exp_field_pack (struct ofpbuf *buf, struct ofl_match_tlv *oft){
-    /*pollins: probabilmente ci sarà da definire una struttura che determina la posizione dell'experimenter ID (come è fatto adesso presuppone che sia il primo valore in value)*/
+    /*TODO pollins: probably we have to define a structure that points to the experimenter_ID position (Now the experimenter ID is the first value in "value")*/
     switch(*((uint32_t*) (oft->value)))
     {
         case OPENSTATE_VENDOR_ID:{

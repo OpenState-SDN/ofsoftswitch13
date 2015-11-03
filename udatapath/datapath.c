@@ -56,6 +56,7 @@
 #include "oflib/ofl-log.h"
 #include "oflib-exp/ofl-exp.h"
 #include "oflib-exp/ofl-exp-nicira.h"
+#include "oflib-exp/ofl-exp-openstate.h"
 #include "oflib/ofl-messages.h"
 #include "oflib/ofl-log.h"
 #include "openflow/openflow.h"
@@ -327,7 +328,7 @@ remote_rconn_run(struct datapath *dp, struct remote *r, uint8_t conn_id) {
                                {{.type = OFPT_ERROR},
                                 .type = ofl_error_type(error) | 0x8000, // [*]
                                 .exp_type = ofl_error_code(error),
-                                .experimenter = ((struct ofl_msg_experimenter *) msg)->experimenter_id,
+                                .experimenter = get_experimenter_id(msg),
                                 .data_length = buffer->size,
                                 .data        = buffer->data};
                        dp_send_message(dp, (struct ofl_msg_header *)&err, &sender);

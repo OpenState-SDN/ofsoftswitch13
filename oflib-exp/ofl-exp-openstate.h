@@ -373,4 +373,13 @@ ofl_structs_match_exp_put64(struct ofl_match *match, uint32_t header, uint32_t e
 void
 ofl_structs_match_exp_put64m(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint64_t value, uint64_t mask);
 
+uint32_t
+get_experimenter_id(struct ofl_msg_header *msg);
+
+uint32_t 
+get_experimenter_id_from_match(struct ofl_match *flow_mod_match);
+
+uint32_t 
+get_experimenter_id_from_action(struct ofl_instruction_actions *act);
+
 #endif /* OFL_EXP_OPENSTATE_H */
