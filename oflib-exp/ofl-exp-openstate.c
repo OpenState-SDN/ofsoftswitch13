@@ -139,8 +139,8 @@ static ofl_err
 ofl_structs_set_global_state_unpack(struct ofp_exp_set_global_state *src, size_t *len, struct ofl_exp_set_global_state *dst) {
 
     if (*len == 2*sizeof(uint32_t)) {
-        dst->flag = ntohl(src->flag);
-        dst->flag_mask = ntohl(src->flag_mask);
+        dst->global_state = ntohl(src->global_state);
+        dst->global_state_mask = ntohl(src->global_state_mask);
     }
     else {
         OFL_LOG_DBG(LOG_MODULE, "Received STATE_MOD set global state has invalid length (%zu).", *len);
@@ -209,19 +209,19 @@ ofl_exp_openstate_msg_unpack(struct ofp_header *oh, size_t *len, struct ofl_msg_
                 error = ofl_structs_stateful_table_config_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
             }
 
-            else if (dm->command == OFPSC_SET_L_EXTRACTOR || dm->command == OFPSC_SET_U_EXTRACTOR){
+            else if (dm->command == OFPSC_EXP_SET_L_EXTRACTOR || dm->command == OFPSC_EXP_SET_U_EXTRACTOR){
                 error = ofl_structs_extraction_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
             }
 
-            else if (dm->command == OFPSC_SET_FLOW_STATE){
+            else if (dm->command == OFPSC_EXP_SET_FLOW_STATE){
                 error = ofl_structs_set_flow_state_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
             } 
 
-            else if (dm->command == OFPSC_DEL_FLOW_STATE){
+            else if (dm->command == OFPSC_EXP_DEL_FLOW_STATE){
                 error = ofl_structs_del_flow_state_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
             }                 
 
-            else if (dm->command == OFPSC_SET_GLOBAL_STATE){
+            else if (dm->command == OFPSC_EXP_SET_GLOBAL_STATE){
                 error = ofl_structs_set_global_state_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
             }
 
@@ -346,27 +346,27 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
                 break; 
             }
 
-            case (OFPAT_EXP_SET_FLAG): 
+            case (OFPAT_EXP_SET_GLOBAL_STATE): 
             {
-                struct ofp_exp_action_set_flag *sa;
-                struct ofl_exp_action_set_flag *da;              
-                sa = (struct ofp_exp_action_set_flag*)ext;
-                da = (struct ofl_exp_action_set_flag *)malloc(sizeof(struct ofl_exp_action_set_flag));
+                struct ofp_exp_action_set_global_state *sa;
+                struct ofl_exp_action_set_global_state *da;              
+                sa = (struct ofp_exp_action_set_global_state*)ext;
+                da = (struct ofl_exp_action_set_global_state *)malloc(sizeof(struct ofl_exp_action_set_global_state));
 
                 da->header.header.experimenter_id = ntohl(exp->experimenter);
                 da->header.act_type = ntohl(ext->act_type);
 
-                if (*len < sizeof(struct ofp_exp_action_set_flag)) {
-                    OFL_LOG_DBG(LOG_MODULE, "Received SET FLAG action has invalid length (%zu).", *len);
+                if (*len < sizeof(struct ofp_exp_action_set_global_state)) {
+                    OFL_LOG_DBG(LOG_MODULE, "Received SET GLOBAL STATE action has invalid length (%zu).", *len);
                     *dst = (struct ofl_action_header *)da;
-                    return ofl_error(OFPET_EXPERIMENTER, OFPEC_EXP_SET_FLAG_ACT);
+                    return ofl_error(OFPET_EXPERIMENTER, OFPEC_EXP_SET_GLOBAL_STATE_ACT);
                 }
 
-                da->flag = ntohl(sa->flag);
-                da->flag_mask = ntohl(sa->flag_mask);
+                da->global_state = ntohl(sa->global_state);
+                da->global_state_mask = ntohl(sa->global_state_mask);
 
                 *dst = (struct ofl_action_header *)da;
-                *len -= sizeof(struct ofp_exp_action_set_flag);
+                *len -= sizeof(struct ofp_exp_action_set_global_state);
                 break; 
             }
 
@@ -409,19 +409,19 @@ ofl_exp_openstate_act_pack(struct ofl_action_header *src, struct ofp_action_head
 
                 return sizeof(struct ofp_exp_action_set_state);
             }
-            case (OFPAT_EXP_SET_FLAG): 
+            case (OFPAT_EXP_SET_GLOBAL_STATE): 
             {
-                struct ofl_exp_action_set_flag *sa = (struct ofl_exp_action_set_flag *) ext;
-                struct ofp_exp_action_set_flag *da = (struct ofp_exp_action_set_flag *) dst;
+                struct ofl_exp_action_set_global_state *sa = (struct ofl_exp_action_set_global_state *) ext;
+                struct ofp_exp_action_set_global_state *da = (struct ofp_exp_action_set_global_state *) dst;
 
                 da->header.header.experimenter = htonl(exp->experimenter_id);
                 da->header.act_type = htonl(ext->act_type);
                 memset(da->header.pad, 0x00, 4);
-                da->flag = htonl(sa->flag);
-                da->flag_mask = htonl(sa->flag_mask);
-                dst->len = htons(sizeof(struct ofp_exp_action_set_flag));
+                da->global_state = htonl(sa->global_state);
+                da->global_state_mask = htonl(sa->global_state_mask);
+                dst->len = htons(sizeof(struct ofp_exp_action_set_global_state));
 
-                return sizeof(struct ofp_exp_action_set_flag);
+                return sizeof(struct ofp_exp_action_set_global_state);
             }
             default:
                 return 0;
@@ -440,8 +440,8 @@ ofl_exp_openstate_act_ofp_len(struct ofl_action_header *act)
             case (OFPAT_EXP_SET_STATE):
                 return sizeof(struct ofp_exp_action_set_state);
 
-            case (OFPAT_EXP_SET_FLAG):
-                return sizeof(struct ofp_exp_action_set_flag);
+            case (OFPAT_EXP_SET_GLOBAL_STATE):
+                return sizeof(struct ofp_exp_action_set_global_state);
 
             default:
                 return 0;
@@ -465,13 +465,13 @@ ofl_exp_openstate_act_to_string(struct ofl_action_header *act)
                 return string;
                 break;
             }
-            case (OFPAT_EXP_SET_FLAG): 
+            case (OFPAT_EXP_SET_GLOBAL_STATE): 
             {
-                struct ofl_exp_action_set_flag *a = (struct ofl_exp_action_set_flag *)ext;
+                struct ofl_exp_action_set_global_state *a = (struct ofl_exp_action_set_global_state *)ext;
                 char *string = malloc(100);
                 char string_value[33];
-                masked_value_print(string_value,decimal_to_binary(a->flag),decimal_to_binary(a->flag_mask));
-                sprintf(string, "{set_flag=[flag=%s]}", string_value);
+                masked_value_print(string_value,decimal_to_binary(a->global_state),decimal_to_binary(a->global_state_mask));
+                sprintf(string, "{set_global_state=[global_state=%s]}", string_value);
                 return string;
                 break;
             }
@@ -493,9 +493,9 @@ ofl_exp_openstate_act_free(struct ofl_action_header *act){
                 return;
                 break;
             }
-            case (OFPAT_EXP_SET_FLAG):
+            case (OFPAT_EXP_SET_GLOBAL_STATE):
             {
-                struct ofl_exp_action_set_flag *a = (struct ofl_exp_action_set_flag *)ext;
+                struct ofl_exp_action_set_global_state *a = (struct ofl_exp_action_set_global_state *)ext;
                 free(a);
                 return;
                 break;
@@ -533,7 +533,7 @@ ofl_exp_openstate_stats_req_pack(struct ofl_msg_multipart_request_experimenter *
 
             return 0;
         }
-        case (OFPMP_EXP_FLAGS_STATS):
+        case (OFPMP_EXP_GLOBAL_STATE_STATS):
         {
             struct ofl_exp_msg_multipart_request_global_state *msg = (struct ofl_exp_msg_multipart_request_global_state *)e;           
             struct ofp_multipart_request *req;
@@ -547,7 +547,7 @@ ofl_exp_openstate_stats_req_pack(struct ofl_msg_multipart_request_experimenter *
             stats = (struct ofp_exp_global_state_stats_request *)req->body;
             exp_header = (struct ofp_experimenter_stats_header *)stats;
             exp_header -> experimenter = htonl(OPENSTATE_VENDOR_ID);
-            exp_header -> exp_type = htonl(OFPMP_EXP_FLAGS_STATS);
+            exp_header -> exp_type = htonl(OFPMP_EXP_GLOBAL_STATE_STATS);
 
             return 0;
 
@@ -583,7 +583,7 @@ ofl_exp_openstate_stats_reply_pack(struct ofl_msg_multipart_reply_experimenter *
             }
             return 0;
         }
-        case (OFPMP_EXP_FLAGS_STATS):
+        case (OFPMP_EXP_GLOBAL_STATE_STATS):
         {
             struct ofl_exp_msg_multipart_reply_global_state *msg = (struct ofl_exp_msg_multipart_reply_global_state *)e;
             struct ofp_multipart_reply *resp;
@@ -598,9 +598,9 @@ ofl_exp_openstate_stats_reply_pack(struct ofl_msg_multipart_reply_experimenter *
             exp_header = (struct ofp_experimenter_stats_header *)stats;
 
             exp_header -> experimenter = htonl(OPENSTATE_VENDOR_ID);
-            exp_header -> exp_type = htonl(OFPMP_EXP_FLAGS_STATS);
+            exp_header -> exp_type = htonl(OFPMP_EXP_GLOBAL_STATE_STATS);
             memset(stats->pad, 0x00, 4);
-            stats->global_states=htonl(msg->global_states);
+            stats->global_state=htonl(msg->global_state);
             return 0;
         }
         default:
@@ -651,7 +651,7 @@ ofl_exp_openstate_stats_req_unpack(struct ofp_multipart_request *os, uint8_t* bu
             *msg = (struct ofl_msg_multipart_request_header *)dm;
             return 0;
         }
-        case (OFPMP_EXP_FLAGS_STATS):
+        case (OFPMP_EXP_GLOBAL_STATE_STATS):
         {
             struct ofl_exp_msg_multipart_request_global_state *dm;
             dm = (struct ofl_exp_msg_multipart_request_global_state *) malloc(sizeof(struct ofl_exp_msg_multipart_request_global_state));
@@ -709,13 +709,13 @@ ofl_exp_openstate_stats_reply_unpack(struct ofp_multipart_reply *os, uint8_t* bu
             *msg = (struct ofl_msg_multipart_request_header *)dm;
             return 0;
         }
-        case (OFPMP_EXP_FLAGS_STATS):
+        case (OFPMP_EXP_GLOBAL_STATE_STATS):
         {
             struct ofp_exp_global_state_stats *sm;
             struct ofl_exp_msg_multipart_reply_global_state *dm;
 
             if (*len < sizeof(struct ofp_exp_global_state_stats)) {
-                OFL_LOG_DBG(LOG_MODULE, "Received FLAGS stats reply has invalid length (%zu).", *len);
+                OFL_LOG_DBG(LOG_MODULE, "Received GLOBAL STATE stats reply has invalid length (%zu).", *len);
                 return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
             }
             *len -= sizeof(struct ofp_exp_global_state_stats);
@@ -724,7 +724,7 @@ ofl_exp_openstate_stats_reply_unpack(struct ofp_multipart_reply *os, uint8_t* bu
             dm = (struct ofl_exp_msg_multipart_reply_global_state *) malloc(sizeof(struct ofl_exp_msg_multipart_reply_global_state));
             dm->header.type = ntohl(ext->exp_type);
             dm->header.header.experimenter_id = ntohl(ext->experimenter);
-            dm->global_states =  ntohl(sm->global_states);
+            dm->global_state =  ntohl(sm->global_state);
 
             *msg = (struct ofl_msg_multipart_request_header *)dm;
             return 0;
@@ -754,7 +754,7 @@ ofl_exp_openstate_stats_request_to_string(struct ofl_msg_multipart_request_exper
             ofl_structs_match_print(stream, msg->match, exp);
             break;
         }
-        case (OFPMP_EXP_FLAGS_STATS):
+        case (OFPMP_EXP_GLOBAL_STATE_STATS):
         {
             fprintf(stream, "{stat_exp_type=\"");
             ofl_exp_stats_type_print(stream, e->type);
@@ -801,7 +801,7 @@ ofl_exp_openstate_stats_reply_to_string(struct ofl_msg_multipart_reply_experimen
             fprintf(stream, "]");
             break;
         }
-        case (OFPMP_EXP_FLAGS_STATS):
+        case (OFPMP_EXP_GLOBAL_STATE_STATS):
         {
             struct ofl_exp_msg_multipart_reply_global_state *msg = (struct ofl_exp_msg_multipart_reply_global_state *)e;
             size_t i;
@@ -809,7 +809,7 @@ ofl_exp_openstate_stats_reply_to_string(struct ofl_msg_multipart_reply_experimen
             extern int colors;
             fprintf(stream, "{stat_exp_type=\"");
             ofl_exp_stats_type_print(stream, e->type);
-            fprintf(stream, "\", global_states=\"%s\"",decimal_to_binary(msg->global_states));
+            fprintf(stream, "\", global_state=\"%s\"",decimal_to_binary(msg->global_state));
             break;
         }
     }
@@ -828,7 +828,7 @@ ofl_exp_openstate_stats_req_free(struct ofl_msg_multipart_request_header *msg) {
             free(a);
             break;
         }
-        case (OFPMP_EXP_FLAGS_STATS):
+        case (OFPMP_EXP_GLOBAL_STATE_STATS):
         {
             struct ofl_exp_msg_multipart_request_state *a = (struct ofl_exp_msg_multipart_reqeust_state *) ext;
             free(a);
@@ -852,7 +852,7 @@ ofl_exp_openstate_stats_reply_free(struct ofl_msg_multipart_reply_header *msg) {
             free(a);
             break;
         }
-        case (OFPMP_EXP_FLAGS_STATS):
+        case (OFPMP_EXP_GLOBAL_STATE_STATS):
         {
             struct ofl_exp_msg_multipart_reply_state *a = (struct ofl_exp_msg_multipart_reply_state *) ext;
             free(a);
@@ -950,11 +950,11 @@ ofl_exp_openstate_field_unpack(struct ofl_match *match, struct oxm_field *f, voi
             }
             return 0;
         }
-        case OFI_OXM_EXP_FLAGS:{
+        case OFI_OXM_EXP_GLOBAL_STATE:{
             ofl_structs_match_exp_put32(match, f->header, ntohl(*((uint32_t*) experimenter_id)), ntohl(*((uint32_t*) value)));
             return 0;
         }
-        case OFI_OXM_EXP_FLAGS_W:{
+        case OFI_OXM_EXP_GLOBAL_STATE_W:{
             ofl_structs_match_exp_put32m(match, f->header, ntohl(*((uint32_t*) experimenter_id)), ntohl(*((uint32_t*) value)), ntohl(*((uint32_t*) mask)));
             if (check_bad_wildcard32(ntohl(*((uint32_t*) value)), ntohl(*((uint32_t*) mask)))){
                 return ofp_mkerr(OFPET_EXPERIMENTER, OFPEC_BAD_MATCH_WILDCARD);
@@ -1548,13 +1548,13 @@ handle_state_mod(struct pipeline *pl, struct ofl_exp_msg_state_mod *msg,
             state_table_configure_stateful(st, p->stateful);    
             break;}
         
-        case OFPSC_SET_L_EXTRACTOR:
-        case OFPSC_SET_U_EXTRACTOR:{
+        case OFPSC_EXP_SET_L_EXTRACTOR:
+        case OFPSC_EXP_SET_U_EXTRACTOR:{
             struct ofl_exp_set_extractor *p = (struct ofl_exp_set_extractor *) msg->payload;
             struct state_table *st = pl->tables[p->table_id]->state_table;
             if (state_table_is_stateful(st)){
                 int update = 0;
-                if (msg->command == OFPSC_SET_U_EXTRACTOR) 
+                if (msg->command == OFPSC_EXP_SET_U_EXTRACTOR) 
                     update = 1;
                 return state_table_set_extractor(st, (struct key_extractor *)p, update);
             }
@@ -1564,7 +1564,7 @@ handle_state_mod(struct pipeline *pl, struct ofl_exp_msg_state_mod *msg,
             }
             break;}
 
-        case OFPSC_SET_FLOW_STATE:{
+        case OFPSC_EXP_SET_FLOW_STATE:{
             struct ofl_exp_set_flow_state *p = (struct ofl_exp_set_flow_state *) msg->payload;
             struct state_table *st = pl->tables[p->table_id]->state_table;
             if (state_table_is_stateful(st) && state_table_is_configured(st)){
@@ -1576,7 +1576,7 @@ handle_state_mod(struct pipeline *pl, struct ofl_exp_msg_state_mod *msg,
             }
             break;}
 
-        case OFPSC_DEL_FLOW_STATE:{
+        case OFPSC_EXP_DEL_FLOW_STATE:{
             struct ofl_exp_del_flow_state *p = (struct ofl_exp_del_flow_state *) msg->payload;
             struct state_table *st = pl->tables[p->table_id]->state_table;
             if (state_table_is_stateful(st) && state_table_is_configured(st)){
@@ -1588,15 +1588,15 @@ handle_state_mod(struct pipeline *pl, struct ofl_exp_msg_state_mod *msg,
             }
             break;}
 
-        case OFPSC_SET_GLOBAL_STATE:{
-            uint32_t global_states = pl->dp->global_states;
+        case OFPSC_EXP_SET_GLOBAL_STATE:{
+            uint32_t global_state = pl->dp->global_state;
             struct ofl_exp_set_global_state *p = (struct ofl_exp_set_global_state *) msg->payload;
-            global_states = (global_states & ~(p->flag_mask)) | (p->flag & p->flag_mask);
-            pl->dp->global_states = global_states;
+            global_state = (global_state & ~(p->global_state_mask)) | (p->global_state & p->global_state_mask);
+            pl->dp->global_state = global_state;
             break;}
 
-        case OFPSC_RESET_GLOBAL_STATE:{
-            pl->dp->global_states = OFP_GLOBAL_STATES_DEFAULT;
+        case OFPSC_EXP_RESET_GLOBAL_STATE:{
+            pl->dp->global_state = OFP_GLOBAL_STATE_DEFAULT;
             break;}
 
         default:
@@ -1633,14 +1633,14 @@ handle_stats_request_state(struct pipeline *pl, struct ofl_exp_msg_multipart_req
 
 ofl_err
 handle_stats_request_global_state(struct pipeline *pl, const struct sender *sender, struct ofl_exp_msg_multipart_reply_global_state *reply) {
-    uint32_t global_states = pl->dp->global_states;
+    uint32_t global_state = pl->dp->global_state;
     
     *reply = (struct ofl_exp_msg_multipart_reply_global_state)
             {{{{{.type = OFPT_MULTIPART_REPLY},
               .type = OFPMP_EXPERIMENTER, .flags = 0x0000},
              .experimenter_id = OPENSTATE_VENDOR_ID},
-             .type = OFPMP_EXP_FLAGS_STATS},
-             .global_states = global_states};
+             .type = OFPMP_EXP_GLOBAL_STATE_STATS},
+             .global_state = global_state};
     return 0;
 }
 
@@ -2205,7 +2205,7 @@ void
 ofl_exp_stats_type_print(FILE *stream, uint32_t type) {
     switch (type) {
         case (OFPMP_EXP_STATE_STATS):          { fprintf(stream, "state"); return; }
-        case (OFPMP_EXP_FLAGS_STATS):          { fprintf(stream, "global_states"); return; }
+        case (OFPMP_EXP_GLOBAL_STATE_STATS):          { fprintf(stream, "global_state"); return; }
         default: {                    fprintf(stream, "?(%u)", type); return; }
     }
 }

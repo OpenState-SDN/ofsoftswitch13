@@ -552,7 +552,7 @@ stats_global_state(struct vconn *vconn, int argc, char *argv[]) {
             {{{{{.type = OFPT_MULTIPART_REQUEST},
                 .type = OFPMP_EXPERIMENTER, .flags = 0x0000},
                  .experimenter_id = OPENSTATE_VENDOR_ID},
-                 .type = OFPMP_EXP_FLAGS_STATS}}; 
+                 .type = OFPMP_EXP_GLOBAL_STATE_STATS}}; 
     dpctl_transact_and_print(vconn, (struct ofl_msg_header *)&req, NULL);
 }
 

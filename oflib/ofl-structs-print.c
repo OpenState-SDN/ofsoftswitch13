@@ -445,8 +445,8 @@ ofl_structs_oxm_tlv_print(FILE *stream, struct ofl_match_tlv *f)
 					}
 		 			break;
 
-				case OFPXMT_EXP_FLAGS:
-					fprintf(stream, "flags=");
+				case OFPXMT_EXP_GLOBAL_STATE:
+					fprintf(stream, "global_state=");
 					if (!OXM_HASMASK(f->header)) {
 						char string_value[33];
 			            masked_value_print(string_value,decimal_to_binary(*((uint32_t*) (f->value + EXP_ID_LEN))),decimal_to_binary((uint32_t)(pow(2,32)-1)));
