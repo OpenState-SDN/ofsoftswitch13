@@ -1124,11 +1124,29 @@ ofl_exp_openstate_error_to_string(struct ofl_msg_exp_error *msg){
     fprintf(stream, "{type=\"");
     ofl_error_type_print(stream, msg->type);
     fprintf(stream, "\", exp_type=\"");
-    ofl_error_code_print(stream, msg->type, msg->exp_type);
+    ofl_error_openstate_exp_type_print(stream,  msg->exp_type);
     fprintf(stream, "\", dlen=\"%zu\"}", msg->data_length);
     fprintf(stream, "{id=\"0x%"PRIx32"\"}", msg->experimenter);
     fclose(stream);
     return str;
+}
+
+void
+ofl_error_openstate_exp_type_print(FILE *stream, uint16_t exp_type) {
+    switch (exp_type) {
+        case (OFPEC_EXP_STATE_MOD_FAILED): {     fprintf(stream, "OFPEC_EXP_STATE_MOD_FAILED"); return; }
+        case (OFPEC_EXP_SET_EXTRACTOR): {        fprintf(stream, "OFPEC_EXP_SET_EXTRACTOR"); return; }
+        case (OFPEC_EXP_SET_FLOW_STATE): {       fprintf(stream, "OFPEC_EXP_SET_FLOW_STATE"); return; }
+        case (OFPEC_EXP_DEL_FLOW_STATE): {       fprintf(stream, "OFPEC_EXP_DEL_FLOW_STATE"); return; }
+        case (OFPEC_EXP_SET_STATE_ACT): {        fprintf(stream, "OFPEC_EXP_SET_STATE_ACT"); return; }
+        case (OFPEC_EXP_SET_GLOBAL_STATE_ACT): { fprintf(stream, "OFPEC_EXP_SET_GLOBAL_STATE_ACT"); return; }
+        case (OFPEC_BAD_EXP_MESSAGE): {          fprintf(stream, "OFPEC_BAD_EXP_MESSAGE"); return; }
+        case (OFPEC_BAD_EXP_ACTION): {           fprintf(stream, "OFPEC_BAD_EXP_ACTION"); return; }
+        case (OFPEC_BAD_EXP_LEN): {              fprintf(stream, "OFPEC_BAD_EXP_LEN"); return; }
+        case (OFPEC_BAD_TABLE_ID): {             fprintf(stream, "OFPEC_BAD_TABLE_ID"); return; }
+        case (OFPEC_BAD_MATCH_WILDCARD): {       fprintf(stream, "OFPEC_BAD_MATCH_WILDCARD"); return; }
+        default: {                               fprintf(stream, "?(%u)", exp_type); return; }
+    }
 }
 
 

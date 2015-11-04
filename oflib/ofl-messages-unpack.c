@@ -53,25 +53,51 @@ OFL_LOG_INIT(LOG_MODULE)
 static ofl_err
 ofl_msg_unpack_error(struct ofp_header *src, size_t *len, struct ofl_msg_header **msg) {
     struct ofp_error_msg *se;
+    struct ofp_error_experimenter_msg *sexpe;
     struct ofl_msg_error *de;
+    struct ofl_msg_exp_error *dexpe;
 
+    /*sizeof(struct ofp_error_msg) < sizeof(struct ofp_error_experimenter_msg)*/
     if (*len < sizeof(struct ofp_error_msg)) {
         OFL_LOG_WARN(LOG_MODULE, "Received ERROR message invalid length (%zu).", *len);
         return OFL_ERROR;
     }
-    *len -= sizeof(struct ofp_error_msg);
-
+    
     se = (struct ofp_error_msg *)src;
 
-    de = (struct ofl_msg_error *)malloc(sizeof(struct ofl_msg_error));
+    switch(se->type){
+        case (OFPET_EXPERIMENTER):{
+            sexpe = (struct ofp_error_experimenter_msg *)src;
+            dexpe = (struct ofl_msg_exp_error *)malloc(sizeof(struct ofl_msg_exp_error));
+            *len -= sizeof(struct ofp_error_experimenter_msg);
 
-    de->type = (enum ofp_error_type)ntohs(se->type);
-    de->code = ntohs(se->code);
-    de->data_length = *len;
-    de->data = *len > 0 ? (uint8_t *)memcpy(malloc(*len), se->data, *len) : NULL;
-    *len = 0;
+            dexpe->type = (enum ofp_error_type)ntohs(sexpe->type);
+            dexpe->exp_type = ntohs(sexpe->exp_type);
+            dexpe->experimenter = ntohl(sexpe->experimenter);
+            dexpe->data_length = *len;
+            dexpe->data = *len > 0 ? (uint8_t *)memcpy(malloc(*len), sexpe->data, *len) : NULL;
+            *len = 0;
 
-    (*msg) = (struct ofl_msg_header *)de;
+            (*msg) = (struct ofl_msg_header *)dexpe;
+
+            break;
+            }
+
+        default: {
+            de = (struct ofl_msg_error *)malloc(sizeof(struct ofl_msg_error));
+
+            *len -= sizeof(struct ofp_error_msg);
+
+            de->type = (enum ofp_error_type)ntohs(se->type);
+            de->code = ntohs(se->code);
+            de->data_length = *len;
+            de->data = *len > 0 ? (uint8_t *)memcpy(malloc(*len), se->data, *len) : NULL;
+            *len = 0;
+
+            (*msg) = (struct ofl_msg_header *)de;
+            break;
+        }
+    }
     return 0;
 }
 
