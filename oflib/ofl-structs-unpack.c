@@ -48,7 +48,7 @@ OFL_LOG_INIT(LOG_MODULE)
 ofl_err
 ofl_structs_instructions_unpack(struct ofp_instruction *src, size_t *len, struct ofl_instruction_header **dst, struct ofl_exp *exp) {
     size_t ilen;
-    ofl_err error;
+    ofl_err error = 0;
     struct ofl_instruction_header *inst = NULL;
 
     if (*len < sizeof(struct ofp_instruction)) {
@@ -202,20 +202,17 @@ ofl_structs_instructions_unpack(struct ofp_instruction *src, size_t *len, struct
     // must set type before check, so free works correctly
     inst->type = (enum ofp_instruction_type)ntohs(src->type);
     (*dst) = inst;
-
-    if (error)
-        return error;
     
-    if (ilen != 0) {
+    if (!error & ilen != 0) {
         *len = *len - ntohs(src->len) + ilen;
         OFL_LOG_WARN(LOG_MODULE, "The received instruction contained extra bytes (%zu).", ilen);
         ofl_structs_free_instruction(inst, exp);
-        return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
+        error = ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
     }
 
     *len -= ntohs(src->len);
 
-    return 0;
+    return error;
 }
 
 static ofl_err 

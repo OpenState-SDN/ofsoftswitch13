@@ -195,6 +195,8 @@ ofl_exp_openstate_msg_unpack(struct ofp_header *oh, size_t *len, struct ofl_msg_
             dm->header.header.experimenter_id = ntohl(exp_header->experimenter);
             dm->header.type                   = ntohl(exp_header->exp_type);
             
+            (*msg) = (struct ofl_msg_experimenter *)dm;
+
             /*2*sizeof(uint8_t) = enum ofp_exp_msg_state_mod_commands + 1 byte of padding*/
             if (*len < 2*sizeof(uint8_t)) {
                 OFL_LOG_DBG(LOG_MODULE, "Received STATE_MOD message has invalid length (%zu).", *len);
@@ -205,28 +207,21 @@ ofl_exp_openstate_msg_unpack(struct ofp_header *oh, size_t *len, struct ofl_msg_
             
             *len -= 2*sizeof(uint8_t);
 
-            if (dm->command == OFPSC_STATEFUL_TABLE_CONFIG){
-                error = ofl_structs_stateful_table_config_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
-            }
-
-            else if (dm->command == OFPSC_EXP_SET_L_EXTRACTOR || dm->command == OFPSC_EXP_SET_U_EXTRACTOR){
-                error = ofl_structs_extraction_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
-            }
-
-            else if (dm->command == OFPSC_EXP_SET_FLOW_STATE){
-                error = ofl_structs_set_flow_state_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
-            } 
-
-            else if (dm->command == OFPSC_EXP_DEL_FLOW_STATE){
-                error = ofl_structs_del_flow_state_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
-            }                 
-
-            else if (dm->command == OFPSC_EXP_SET_GLOBAL_STATE){
-                error = ofl_structs_set_global_state_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
-            }
-
-            (*msg) = (struct ofl_msg_experimenter *)dm;
-            return error;
+            switch(dm->command){
+                case OFPSC_STATEFUL_TABLE_CONFIG:
+                    return ofl_structs_stateful_table_config_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
+                case OFPSC_EXP_SET_L_EXTRACTOR:
+                case OFPSC_EXP_SET_U_EXTRACTOR:
+                    return ofl_structs_extraction_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
+                case OFPSC_EXP_SET_FLOW_STATE:
+                    return ofl_structs_set_flow_state_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
+                case OFPSC_EXP_DEL_FLOW_STATE:
+                    return ofl_structs_del_flow_state_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
+                case OFPSC_EXP_SET_GLOBAL_STATE:
+                    return ofl_structs_set_global_state_unpack(&(sm->payload[0]), len, &(dm->payload[0]));
+                default:
+                    return ofl_error(OFPET_EXPERIMENTER, OFPEC_EXP_STATE_MOD_BAD_COMMAND);
+            }          
         }
 
         default: {
@@ -316,10 +311,10 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
                 da = (struct ofl_exp_action_set_state *)malloc(sizeof(struct ofl_exp_action_set_state));
                 da->header.header.experimenter_id = ntohl(exp->experimenter);
                 da->header.act_type = ntohl(ext->act_type);
+                *dst = (struct ofl_action_header *)da;
 
                 if (*len < sizeof(struct ofp_exp_action_set_state)) {
                     OFL_LOG_DBG(LOG_MODULE, "Received SET STATE action has invalid length (%zu).", *len);
-                    *dst = (struct ofl_action_header *)da;
                     return ofl_error(OFPET_EXPERIMENTER, OFPEC_EXP_SET_STATE_ACT);
                 }
 
@@ -329,7 +324,6 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
                         OFL_LOG_DBG(LOG_MODULE, "Received SET STATE action has invalid table_id (%s).", ts);
                         free(ts);
                     }
-                    *dst = (struct ofl_action_header *)da;
                     return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_TABLE_ID);
                 }
 
@@ -341,7 +335,6 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
                 da->hard_timeout = ntohl(sa->hard_timeout);
                 da->idle_timeout = ntohl(sa->idle_timeout);
 
-                *dst = (struct ofl_action_header *)da;
                 *len -= sizeof(struct ofp_exp_action_set_state);
                 break; 
             }
@@ -356,16 +349,16 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
                 da->header.header.experimenter_id = ntohl(exp->experimenter);
                 da->header.act_type = ntohl(ext->act_type);
 
+                *dst = (struct ofl_action_header *)da;
+
                 if (*len < sizeof(struct ofp_exp_action_set_global_state)) {
                     OFL_LOG_DBG(LOG_MODULE, "Received SET GLOBAL STATE action has invalid length (%zu).", *len);
-                    *dst = (struct ofl_action_header *)da;
                     return ofl_error(OFPET_EXPERIMENTER, OFPEC_EXP_SET_GLOBAL_STATE_ACT);
                 }
 
                 da->global_state = ntohl(sa->global_state);
                 da->global_state_mask = ntohl(sa->global_state_mask);
 
-                *dst = (struct ofl_action_header *)da;
                 *len -= sizeof(struct ofp_exp_action_set_global_state);
                 break; 
             }
@@ -1135,6 +1128,7 @@ void
 ofl_error_openstate_exp_type_print(FILE *stream, uint16_t exp_type) {
     switch (exp_type) {
         case (OFPEC_EXP_STATE_MOD_FAILED): {     fprintf(stream, "OFPEC_EXP_STATE_MOD_FAILED"); return; }
+        case (OFPEC_EXP_STATE_MOD_BAD_COMMAND): {     fprintf(stream, "OFPEC_EXP_STATE_MOD_BAD_COMMAND"); return; }
         case (OFPEC_EXP_SET_EXTRACTOR): {        fprintf(stream, "OFPEC_EXP_SET_EXTRACTOR"); return; }
         case (OFPEC_EXP_SET_FLOW_STATE): {       fprintf(stream, "OFPEC_EXP_SET_FLOW_STATE"); return; }
         case (OFPEC_EXP_DEL_FLOW_STATE): {       fprintf(stream, "OFPEC_EXP_DEL_FLOW_STATE"); return; }
