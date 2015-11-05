@@ -36,7 +36,7 @@ ofl_structs_stateful_table_config_unpack(struct ofp_exp_stateful_table_config *s
     }
     else
     { 
-       OFL_LOG_DBG(LOG_MODULE, "Received state mod stateful_table is too short (%zu).", *len);
+       OFL_LOG_DBG(LOG_MODULE, "Received state mod stateful_table_config is too short (%zu).", *len);
        return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
     }
 
@@ -62,7 +62,7 @@ ofl_structs_extraction_unpack(struct ofp_exp_set_extractor *src, size_t *len, st
         }
     }
     else
-    { //control of struct ofp_extraction length.
+    { //check of struct ofp_exp_set_extractor length.
        OFL_LOG_DBG(LOG_MODULE, "Received state mod extraction is too short (%zu).", *len);       
        return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
     }
@@ -96,7 +96,7 @@ ofl_structs_set_flow_state_unpack(struct ofp_exp_set_flow_state *src, size_t *le
         memcpy(dst->key, key, dst->key_len);
     }
     else
-    { //control of struct ofp_extraction length.
+    { //check of struct ofp_exp_set_flow_state length.
        OFL_LOG_DBG(LOG_MODULE, "Received state mod set_flow is too short (%zu).", *len);
        return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
     }
@@ -125,7 +125,7 @@ ofl_structs_del_flow_state_unpack(struct ofp_exp_del_flow_state *src, size_t *le
         OFL_LOG_DBG(LOG_MODULE, "key count is %d\n",dst->key_len);
     }
     else
-    { //control of struct ofp_extraction length.
+    { //check of struct ofp_exp_del_flow_state length.
        OFL_LOG_DBG(LOG_MODULE, "Received state mod del_flow is too short (%zu).", *len);
        return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
     }
@@ -143,6 +143,7 @@ ofl_structs_set_global_state_unpack(struct ofp_exp_set_global_state *src, size_t
         dst->global_state_mask = ntohl(src->global_state_mask);
     }
     else {
+        //check of struct ofp_exp_set_global_state length.
         OFL_LOG_DBG(LOG_MODULE, "Received STATE_MOD set global state has invalid length (%zu).", *len);
         return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
     }
@@ -315,7 +316,7 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
 
                 if (*len < sizeof(struct ofp_exp_action_set_state)) {
                     OFL_LOG_DBG(LOG_MODULE, "Received SET STATE action has invalid length (%zu).", *len);
-                    return ofl_error(OFPET_EXPERIMENTER, OFPEC_EXP_SET_STATE_ACT);
+                    return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
                 }
 
                 if (sa->table_id >= PIPELINE_TABLES) {
@@ -353,7 +354,7 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
 
                 if (*len < sizeof(struct ofp_exp_action_set_global_state)) {
                     OFL_LOG_DBG(LOG_MODULE, "Received SET GLOBAL STATE action has invalid length (%zu).", *len);
-                    return ofl_error(OFPET_EXPERIMENTER, OFPEC_EXP_SET_GLOBAL_STATE_ACT);
+                    return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
                 }
 
                 da->global_state = ntohl(sa->global_state);
@@ -366,7 +367,7 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
             default: 
             {
                 OFL_LOG_DBG(LOG_MODULE, "Trying to unpack unknown Openstate Experimenter action.");
-                return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_EXPERIMENTER);
+                return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_ACTION);
             }
         }
     }
@@ -1132,8 +1133,6 @@ ofl_error_openstate_exp_type_print(FILE *stream, uint16_t exp_type) {
         case (OFPEC_EXP_SET_EXTRACTOR): {        fprintf(stream, "OFPEC_EXP_SET_EXTRACTOR"); return; }
         case (OFPEC_EXP_SET_FLOW_STATE): {       fprintf(stream, "OFPEC_EXP_SET_FLOW_STATE"); return; }
         case (OFPEC_EXP_DEL_FLOW_STATE): {       fprintf(stream, "OFPEC_EXP_DEL_FLOW_STATE"); return; }
-        case (OFPEC_EXP_SET_STATE_ACT): {        fprintf(stream, "OFPEC_EXP_SET_STATE_ACT"); return; }
-        case (OFPEC_EXP_SET_GLOBAL_STATE_ACT): { fprintf(stream, "OFPEC_EXP_SET_GLOBAL_STATE_ACT"); return; }
         case (OFPEC_BAD_EXP_MESSAGE): {          fprintf(stream, "OFPEC_BAD_EXP_MESSAGE"); return; }
         case (OFPEC_BAD_EXP_ACTION): {           fprintf(stream, "OFPEC_BAD_EXP_ACTION"); return; }
         case (OFPEC_BAD_EXP_LEN): {              fprintf(stream, "OFPEC_BAD_EXP_LEN"); return; }
@@ -1347,8 +1346,8 @@ void state_table_write_state(struct state_entry *entry, struct packet *pkt) {
 }
 ofl_err state_table_del_state(struct state_table *table, uint8_t *key, uint32_t len) {
     struct state_entry *e;
-
     int i;
+    uint8_t found = 0;
     uint32_t key_len=0; //update-scope key extractor length
     struct key_extractor *extractor=&table->write_key;
     for (i=0; i<extractor->field_count; i++) {
@@ -1365,8 +1364,13 @@ ofl_err state_table_del_state(struct state_table *table, uint8_t *key, uint32_t 
         hmap_node, hash_bytes(key, MAX_STATE_KEY_LEN, 0), &table->state_entries){
             if (!memcmp(key, e->key, MAX_STATE_KEY_LEN)){
                 hmap_remove_and_shrink(&table->state_entries, &e->hmap_node);
+                found = 1;
                 break;
             }
+    }
+
+    if (!found){
+        return ofl_error(OFPET_EXPERIMENTER, OFPEC_EXP_DEL_FLOW_STATE);
     }
 
     HMAP_FOR_EACH_WITH_HASH(e, struct state_entry, 
