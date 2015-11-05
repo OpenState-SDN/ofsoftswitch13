@@ -351,7 +351,6 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
                 da->header.act_type = ntohl(ext->act_type);
 
                 *dst = (struct ofl_action_header *)da;
-
                 if (*len < sizeof(struct ofp_exp_action_set_global_state)) {
                     OFL_LOG_DBG(LOG_MODULE, "Received SET GLOBAL STATE action has invalid length (%zu).", *len);
                     return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
@@ -366,6 +365,10 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
 
             default: 
             {
+                struct ofl_action_experimenter *da;
+                da = (struct ofl_action_experimenter *)malloc(sizeof(struct ofl_action_experimenter));
+                da->experimenter_id = ntohl(exp->experimenter);
+                (*dst) = (struct ofl_action_header *)da;
                 OFL_LOG_DBG(LOG_MODULE, "Trying to unpack unknown Openstate Experimenter action.");
                 return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_ACTION);
             }
@@ -2348,7 +2351,6 @@ get_experimenter_id(struct ofl_msg_header *msg){
     else if(msg->type == OFPT_FLOW_MOD) {
         struct ofl_msg_flow_mod *flow_mod = (struct ofl_msg_flow_mod *)msg;
         struct ofl_match_header *flow_mod_match = flow_mod->match;
-
         exp_id = get_experimenter_id_from_match((struct ofl_match*)flow_mod_match);
         if(!exp_id){
             int i;
