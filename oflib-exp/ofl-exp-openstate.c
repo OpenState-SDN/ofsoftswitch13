@@ -28,7 +28,7 @@ ofl_structs_stateful_table_config_unpack(struct ofp_exp_stateful_table_config *s
     if(*len == sizeof(struct ofp_exp_stateful_table_config))
     {
         if (src->table_id >= PIPELINE_TABLES) {
-            OFL_LOG_DBG(LOG_MODULE, "Received STATE_MOD message has invalid table id (%zu).", src->table_id );
+            OFL_LOG_WARN(LOG_MODULE, "Received STATE_MOD message has invalid table id (%zu).", src->table_id );
             return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_TABLE_ID);
         } 
         dst->table_id = src->table_id;
@@ -36,7 +36,7 @@ ofl_structs_stateful_table_config_unpack(struct ofp_exp_stateful_table_config *s
     }
     else
     { 
-       OFL_LOG_DBG(LOG_MODULE, "Received state mod stateful_table_config is too short (%zu).", *len);
+       OFL_LOG_WARN(LOG_MODULE, "Received state mod stateful_table_config is too short (%zu).", *len);
        return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
     }
 
@@ -51,7 +51,7 @@ ofl_structs_extraction_unpack(struct ofp_exp_set_extractor *src, size_t *len, st
     if(*len == ((1+ntohl(src->field_count))*sizeof(uint32_t) + 4*sizeof(uint8_t)) && (ntohl(src->field_count)>0))
     {
         if (src->table_id >= PIPELINE_TABLES) {
-            OFL_LOG_DBG(LOG_MODULE, "Received STATE_MOD message has invalid table id (%zu).", src->table_id );
+            OFL_LOG_WARN(LOG_MODULE, "Received STATE_MOD message has invalid table id (%zu).", src->table_id );
             return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_TABLE_ID);
         } 
         dst->table_id = src->table_id;
@@ -63,7 +63,7 @@ ofl_structs_extraction_unpack(struct ofp_exp_set_extractor *src, size_t *len, st
     }
     else
     { //check of struct ofp_exp_set_extractor length.
-       OFL_LOG_DBG(LOG_MODULE, "Received state mod extraction is too short (%zu).", *len);       
+       OFL_LOG_WARN(LOG_MODULE, "Received state mod extraction is too short (%zu).", *len);       
        return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
     }
 
@@ -80,7 +80,7 @@ ofl_structs_set_flow_state_unpack(struct ofp_exp_set_flow_state *src, size_t *le
     if((*len == ((7*sizeof(uint32_t) + ntohl(src->key_len)*sizeof(uint8_t))) + 4*sizeof(uint8_t)) && (ntohl(src->key_len)>0))
     {
         if (src->table_id >= PIPELINE_TABLES) {
-            OFL_LOG_DBG(LOG_MODULE, "Received STATE_MOD message has invalid table id (%zu).", src->table_id );
+            OFL_LOG_WARN(LOG_MODULE, "Received STATE_MOD message has invalid table id (%zu).", src->table_id );
             return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_TABLE_ID);
         } 
         dst->table_id = src->table_id;
@@ -97,7 +97,7 @@ ofl_structs_set_flow_state_unpack(struct ofp_exp_set_flow_state *src, size_t *le
     }
     else
     { //check of struct ofp_exp_set_flow_state length.
-       OFL_LOG_DBG(LOG_MODULE, "Received state mod set_flow is too short (%zu).", *len);
+       OFL_LOG_WARN(LOG_MODULE, "Received state mod set_flow is too short (%zu).", *len);
        return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
     }
 
@@ -114,7 +114,7 @@ ofl_structs_del_flow_state_unpack(struct ofp_exp_del_flow_state *src, size_t *le
     if((*len == ((sizeof(uint32_t) + ntohl(src->key_len)*sizeof(uint8_t))) + 4*sizeof(uint8_t)) && (ntohl(src->key_len)>0))
     {
         if (src->table_id >= PIPELINE_TABLES) {
-            OFL_LOG_DBG(LOG_MODULE, "Received STATE_MOD message has invalid table id (%zu).", src->table_id );
+            OFL_LOG_WARN(LOG_MODULE, "Received STATE_MOD message has invalid table id (%zu).", src->table_id );
             return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_TABLE_ID);
         } 
         dst->table_id = src->table_id;
@@ -126,7 +126,7 @@ ofl_structs_del_flow_state_unpack(struct ofp_exp_del_flow_state *src, size_t *le
     }
     else
     { //check of struct ofp_exp_del_flow_state length.
-       OFL_LOG_DBG(LOG_MODULE, "Received state mod del_flow is too short (%zu).", *len);
+       OFL_LOG_WARN(LOG_MODULE, "Received state mod del_flow is too short (%zu).", *len);
        return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
     }
  
@@ -144,7 +144,7 @@ ofl_structs_set_global_state_unpack(struct ofp_exp_set_global_state *src, size_t
     }
     else {
         //check of struct ofp_exp_set_global_state length.
-        OFL_LOG_DBG(LOG_MODULE, "Received STATE_MOD set global state has invalid length (%zu).", *len);
+        OFL_LOG_WARN(LOG_MODULE, "Received STATE_MOD set global state has invalid length (%zu).", *len);
         return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
     }
     
@@ -159,12 +159,12 @@ ofl_exp_openstate_msg_pack(struct ofl_msg_experimenter *msg, uint8_t **buf, size
         struct ofl_exp_openstate_msg_header *exp = (struct ofl_exp_openstate_msg_header *)msg;
         switch (exp->type) {
             default: {
-                OFL_LOG_DBG(LOG_MODULE, "Trying to pack unknown Openstate Experimenter message.");
+                OFL_LOG_WARN(LOG_MODULE, "Trying to pack unknown Openstate Experimenter message.");
                 return -1;
             }
         }
     } else {
-        OFL_LOG_DBG(LOG_MODULE, "Trying to pack non-Openstate Experimenter message.");
+        OFL_LOG_WARN(LOG_MODULE, "Trying to pack non-Openstate Experimenter message.");
         return -1;
     }
 }
@@ -176,7 +176,7 @@ ofl_exp_openstate_msg_unpack(struct ofp_header *oh, size_t *len, struct ofl_msg_
     struct ofp_experimenter_header *exp_header;
 
     if (*len < sizeof(struct ofp_experimenter_header)) {
-        OFL_LOG_DBG(LOG_MODULE, "Received EXPERIMENTER message has invalid length (%zu).", *len);
+        OFL_LOG_WARN(LOG_MODULE, "Received EXPERIMENTER message has invalid length (%zu).", *len);
         return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
     }
 
@@ -200,7 +200,7 @@ ofl_exp_openstate_msg_unpack(struct ofp_header *oh, size_t *len, struct ofl_msg_
 
             /*2*sizeof(uint8_t) = enum ofp_exp_msg_state_mod_commands + 1 byte of padding*/
             if (*len < 2*sizeof(uint8_t)) {
-                OFL_LOG_DBG(LOG_MODULE, "Received STATE_MOD message has invalid length (%zu).", *len);
+                OFL_LOG_WARN(LOG_MODULE, "Received STATE_MOD message has invalid length (%zu).", *len);
                 return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
             }
           
@@ -230,7 +230,7 @@ ofl_exp_openstate_msg_unpack(struct ofp_header *oh, size_t *len, struct ofl_msg_
             dm = (struct ofl_msg_experimenter *)malloc(sizeof(struct ofl_msg_experimenter));
             dm->experimenter_id = ntohl(exp_header->experimenter);
             (*msg) = dm;
-            OFL_LOG_DBG(LOG_MODULE, "Trying to unpack unknown Openstate Experimenter message.");
+            OFL_LOG_WARN(LOG_MODULE, "Trying to unpack unknown Openstate Experimenter message.");
             return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_MESSAGE);
         }
     }
@@ -248,11 +248,11 @@ ofl_exp_openstate_msg_free(struct ofl_msg_experimenter *msg) {
                 break;
             }
             default: {
-                OFL_LOG_DBG(LOG_MODULE, "Trying to free unknown Openstate Experimenter message.");
+                OFL_LOG_WARN(LOG_MODULE, "Trying to free unknown Openstate Experimenter message.");
             }
         }
     } else {
-        OFL_LOG_DBG(LOG_MODULE, "Trying to free non-Openstate Experimenter message.");
+        OFL_LOG_WARN(LOG_MODULE, "Trying to free non-Openstate Experimenter message.");
     }
     free(msg);
     return 0;
@@ -274,11 +274,11 @@ ofl_exp_openstate_msg_to_string(struct ofl_msg_experimenter *msg) {
                 break;
             }
             default: {
-                OFL_LOG_DBG(LOG_MODULE, "Trying to print unknown Openstate Experimenter message. osexp{type=\"%u\"}", exp->type);
+                OFL_LOG_WARN(LOG_MODULE, "Trying to print unknown Openstate Experimenter message. osexp{type=\"%u\"}", exp->type);
             }
         }
     } else {
-        OFL_LOG_DBG(LOG_MODULE, "Trying to print non-Openstate Experimenter message. exp{exp_id=\"%u\"}", msg->experimenter_id);
+        OFL_LOG_WARN(LOG_MODULE, "Trying to print non-Openstate Experimenter message. exp{exp_id=\"%u\"}", msg->experimenter_id);
     }
 
     fclose(stream);
@@ -291,7 +291,7 @@ ofl_err
 ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct ofl_action_header **dst) {
 
     if (*len < sizeof(struct ofp_action_experimenter_header)) {
-        OFL_LOG_DBG(LOG_MODULE, "Received EXPERIMENTER action has invalid length (%zu).", *len);
+        OFL_LOG_WARN(LOG_MODULE, "Received EXPERIMENTER action has invalid length (%zu).", *len);
         return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
     }
 
@@ -315,14 +315,14 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
                 *dst = (struct ofl_action_header *)da;
 
                 if (*len < sizeof(struct ofp_exp_action_set_state)) {
-                    OFL_LOG_DBG(LOG_MODULE, "Received SET STATE action has invalid length (%zu).", *len);
+                    OFL_LOG_WARN(LOG_MODULE, "Received SET STATE action has invalid length (%zu).", *len);
                     return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
                 }
 
                 if (sa->table_id >= PIPELINE_TABLES) {
                     if (OFL_LOG_IS_WARN_ENABLED(LOG_MODULE)) {
                         char *ts = ofl_table_to_string(sa->table_id);
-                        OFL_LOG_DBG(LOG_MODULE, "Received SET STATE action has invalid table_id (%s).", ts);
+                        OFL_LOG_WARN(LOG_MODULE, "Received SET STATE action has invalid table_id (%s).", ts);
                         free(ts);
                     }
                     return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_TABLE_ID);
@@ -352,7 +352,7 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
 
                 *dst = (struct ofl_action_header *)da;
                 if (*len < sizeof(struct ofp_exp_action_set_global_state)) {
-                    OFL_LOG_DBG(LOG_MODULE, "Received SET GLOBAL STATE action has invalid length (%zu).", *len);
+                    OFL_LOG_WARN(LOG_MODULE, "Received SET GLOBAL STATE action has invalid length (%zu).", *len);
                     return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
                 }
 
@@ -369,7 +369,7 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header *src, size_t *len, struct 
                 da = (struct ofl_action_experimenter *)malloc(sizeof(struct ofl_action_experimenter));
                 da->experimenter_id = ntohl(exp->experimenter);
                 (*dst) = (struct ofl_action_header *)da;
-                OFL_LOG_DBG(LOG_MODULE, "Trying to unpack unknown Openstate Experimenter action.");
+                OFL_LOG_WARN(LOG_MODULE, "Trying to unpack unknown Openstate Experimenter action.");
                 return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_ACTION);
             }
         }
@@ -621,7 +621,7 @@ ofl_exp_openstate_stats_req_unpack(struct ofp_multipart_request *os, uint8_t* bu
             // ofp_multipart_request length was checked at ofl_msg_unpack_multipart_request
 
             if (*len < (sizeof(struct ofp_exp_state_stats_request) - sizeof(struct ofp_match))) {
-                OFL_LOG_DBG(LOG_MODULE, "Received STATE stats request has invalid length (%zu).", *len);
+                OFL_LOG_WARN(LOG_MODULE, "Received STATE stats request has invalid length (%zu).", *len);
                 return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
             }
             *len -= ((sizeof(struct ofp_exp_state_stats_request)) - sizeof(struct ofp_match));
@@ -630,7 +630,7 @@ ofl_exp_openstate_stats_req_unpack(struct ofp_multipart_request *os, uint8_t* bu
             dm = (struct ofl_exp_msg_multipart_request_state *) malloc(sizeof(struct ofl_exp_msg_multipart_request_state));
 
             if (sm->table_id != OFPTT_ALL && sm->table_id >= PIPELINE_TABLES) {
-                 OFL_LOG_DBG(LOG_MODULE, "Received MULTIPART REQUEST STATE message has invalid table id (%d).", sm->table_id );
+                 OFL_LOG_WARN(LOG_MODULE, "Received MULTIPART REQUEST STATE message has invalid table id (%d).", sm->table_id );
                  return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_TABLE_ID);
             }
             dm->header.type = ntohl(ext->exp_type);
@@ -712,7 +712,7 @@ ofl_exp_openstate_stats_reply_unpack(struct ofp_multipart_reply *os, uint8_t* bu
             struct ofl_exp_msg_multipart_reply_global_state *dm;
 
             if (*len < sizeof(struct ofp_exp_global_state_stats)) {
-                OFL_LOG_DBG(LOG_MODULE, "Received GLOBAL STATE stats reply has invalid length (%zu).", *len);
+                OFL_LOG_WARN(LOG_MODULE, "Received GLOBAL STATE stats reply has invalid length (%zu).", *len);
                 return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
             }
             *len -= sizeof(struct ofp_exp_global_state_stats);
@@ -832,7 +832,7 @@ ofl_exp_openstate_stats_req_free(struct ofl_msg_multipart_request_header *msg) {
             break;
         }
         default: {
-            OFL_LOG_DBG(LOG_MODULE, "Trying to free unknown Openstate Experimenter message.");
+            OFL_LOG_WARN(LOG_MODULE, "Trying to free unknown Openstate Experimenter message.");
         }
     }
     return 0;
@@ -856,7 +856,7 @@ ofl_exp_openstate_stats_reply_free(struct ofl_msg_multipart_reply_header *msg) {
             break;
         }
         default: {
-            OFL_LOG_DBG(LOG_MODULE, "Trying to free unknown Openstate Experimenter message.");
+            OFL_LOG_WARN(LOG_MODULE, "Trying to free unknown Openstate Experimenter message.");
         }
     }
     return 0;
@@ -1359,7 +1359,7 @@ ofl_err state_table_del_state(struct state_table *table, uint8_t *key, uint32_t 
      }
     if(key_len != len)
     {
-        OFL_LOG_DBG(LOG_MODULE, "key extractor length != received key length");
+        OFL_LOG_WARN(LOG_MODULE, "key extractor length != received key length");
         return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
     }
     
@@ -1400,7 +1400,7 @@ ofl_err state_table_set_extractor(struct state_table *table, struct key_extracto
     if (update){
         if (table->read_key.field_count!=0){
             if (table->read_key.field_count != ke->field_count){
-                OFL_LOG_DBG(LOG_MODULE, "Update-scope should provide same length keys of lookup-scope: %d vs %d\n",ke->field_count,table->read_key.field_count);
+                OFL_LOG_WARN(LOG_MODULE, "Update-scope should provide same length keys of lookup-scope: %d vs %d\n",ke->field_count,table->read_key.field_count);
                 return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
             }
         }
@@ -1410,7 +1410,7 @@ ofl_err state_table_set_extractor(struct state_table *table, struct key_extracto
     else{
         if (table->write_key.field_count!=0){
             if (table->write_key.field_count != ke->field_count){
-                OFL_LOG_DBG(LOG_MODULE, "Lookup-scope should provide same length keys of update-scope: %d vs %d\n",ke->field_count,table->write_key.field_count);
+                OFL_LOG_WARN(LOG_MODULE, "Lookup-scope should provide same length keys of update-scope: %d vs %d\n",ke->field_count,table->write_key.field_count);
                 return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
             }
         }
@@ -1470,7 +1470,7 @@ ofl_err state_table_set_state(struct state_table *table, struct packet *pkt, str
         }
         else
         {
-            OFL_LOG_DBG(LOG_MODULE, "key extractor length != received key length");
+            OFL_LOG_WARN(LOG_MODULE, "key extractor length != received key length");
             return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_LEN);
         }
     }
@@ -1578,7 +1578,7 @@ handle_state_mod(struct pipeline *pl, struct ofl_exp_msg_state_mod *msg,
                 return state_table_set_extractor(st, (struct key_extractor *)p, update);
             }
             else{      
-                OFL_LOG_DBG(LOG_MODULE, "ERROR STATE MOD: cannot configure extractor (stage %u is not stateful)", p->table_id);
+                OFL_LOG_WARN(LOG_MODULE, "ERROR STATE MOD: cannot configure extractor (stage %u is not stateful)", p->table_id);
                 return ofl_error(OFPET_EXPERIMENTER, OFPEC_EXP_SET_EXTRACTOR);
             }
             break;}
@@ -1590,7 +1590,7 @@ handle_state_mod(struct pipeline *pl, struct ofl_exp_msg_state_mod *msg,
                 return state_table_set_state(st, NULL, p, NULL);
             }
             else{
-                OFL_LOG_DBG(LOG_MODULE, "ERROR STATE MOD at stage %u: stage not stateful or not configured", p->table_id);
+                OFL_LOG_WARN(LOG_MODULE, "ERROR STATE MOD at stage %u: stage not stateful or not configured", p->table_id);
                 return ofl_error(OFPET_EXPERIMENTER, OFPEC_EXP_SET_FLOW_STATE);
             }
             break;}
@@ -1602,7 +1602,7 @@ handle_state_mod(struct pipeline *pl, struct ofl_exp_msg_state_mod *msg,
                 return state_table_del_state(st, p->key, p->key_len);
             }
             else{
-                OFL_LOG_DBG(LOG_MODULE, "ERROR STATE MOD at stage %u: stage not stateful or not configured", p->table_id);
+                OFL_LOG_WARN(LOG_MODULE, "ERROR STATE MOD at stage %u: stage not stateful or not configured", p->table_id);
                 return ofl_error(OFPET_EXPERIMENTER, OFPEC_EXP_DEL_FLOW_STATE);
             }
             break;}
@@ -2150,19 +2150,19 @@ ofl_structs_state_stats_unpack(struct ofp_exp_state_stats *src, uint8_t *buf, si
     size_t i;
     int match_pos;
     if (*len < sizeof(struct ofp_exp_state_stats) ) {
-        OFL_LOG_DBG(LOG_MODULE, "Received state stats has invalid length (%zu).", *len);
+        OFL_LOG_WARN(LOG_MODULE, "Received state stats has invalid length (%zu).", *len);
         return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
     }
 
     if (*len < ntohs(src->length)) {
-        OFL_LOG_DBG(LOG_MODULE, "Received state stats reply has invalid length (set to %u, but only %zu received).", ntohs(src->length), *len);
+        OFL_LOG_WARN(LOG_MODULE, "Received state stats reply has invalid length (set to %u, but only %zu received).", ntohs(src->length), *len);
         return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
     }
 
     if (src->table_id >= PIPELINE_TABLES) {
         if (OFL_LOG_IS_WARN_ENABLED(LOG_MODULE)) {
             char *ts = ofl_table_to_string(src->table_id);
-            OFL_LOG_DBG(LOG_MODULE, "Received state stats has invalid table_id (%s).", ts);
+            OFL_LOG_WARN(LOG_MODULE, "Received state stats has invalid table_id (%s).", ts);
             free(ts);
         }
         return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_TABLE_ID);
@@ -2190,7 +2190,7 @@ ofl_structs_state_stats_unpack(struct ofp_exp_state_stats *src, uint8_t *buf, si
     
     if (slen != 0) {
         *len = *len - ntohs(src->length) + slen;
-        OFL_LOG_DBG(LOG_MODULE, "The received state stats contained extra bytes (%zu).", slen);
+        OFL_LOG_WARN(LOG_MODULE, "The received state stats contained extra bytes (%zu).", slen);
         free(s);
         return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
     }
@@ -2209,7 +2209,7 @@ ofl_utils_count_ofp_state_stats(void *data, size_t data_len, size_t *count) {
     while (data_len >= sizeof(struct ofp_exp_state_stats)) {
         stat = (struct ofp_exp_state_stats *)d;
         if (data_len < ntohs(stat->length) || ntohs(stat->length) < sizeof(struct ofp_exp_state_stats)) {
-            OFL_LOG_DBG(LOG_MODULE, "Received state stat has invalid length.");
+            OFL_LOG_WARN(LOG_MODULE, "Received state stat has invalid length.");
             return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
         }
         data_len -= ntohs(stat->length);

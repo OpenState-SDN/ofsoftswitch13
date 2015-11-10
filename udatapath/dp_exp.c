@@ -72,7 +72,7 @@ dp_exp_action(struct packet *pkt, struct ofl_action_experimenter *act) {
                 }
                 else
                 {
-                    VLOG_DBG_RL(LOG_MODULE, &rl, "ERROR NEXT STATE at stage %u: stage not stateful", wns->table_id);
+                    VLOG_WARN_RL(LOG_MODULE, &rl, "ERROR NEXT STATE at stage %u: stage not stateful", wns->table_id);
                 }
                 break;
             }
