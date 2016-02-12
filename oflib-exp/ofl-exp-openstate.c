@@ -507,6 +507,26 @@ ofl_exp_openstate_stats_req_pack(struct ofl_msg_multipart_request_experimenter *
 
             return 0;
         }
+        case (OFPMP_EXP_STATE_STATS_NUM):
+        {
+            struct ofl_exp_msg_multipart_request_state_num *msg = (struct ofl_exp_msg_multipart_request_state_num *)e;
+            struct ofp_multipart_request *req;
+            struct ofp_exp_state_stats_num_request *stats;
+            struct ofp_experimenter_stats_header *exp_header;
+            uint8_t *ptr;
+            *buf_len = sizeof(struct ofp_multipart_request) + sizeof(struct ofp_exp_state_stats_num_request);
+            *buf     = (uint8_t *)malloc(*buf_len);
+
+            req = (struct ofp_multipart_request *)(*buf);
+            stats = (struct ofp_exp_state_stats_num_request *)req->body;
+            exp_header = (struct ofp_experimenter_stats_header *)stats;
+            exp_header -> experimenter = htonl(OPENSTATE_VENDOR_ID);
+            exp_header -> exp_type = htonl(OFPMP_EXP_STATE_STATS_NUM);
+            stats->table_id = msg->table_id;
+            memset(stats->pad, 0x00, 7);
+
+            return 0;
+        }
         case (OFPMP_EXP_GLOBAL_STATE_STATS):
         {
             struct ofl_exp_msg_multipart_request_global_state *msg = (struct ofl_exp_msg_multipart_request_global_state *)e;           
@@ -555,6 +575,26 @@ ofl_exp_openstate_stats_reply_pack(struct ofl_msg_multipart_reply_experimenter *
             for (i=0; i<msg->stats_num; i++) {
                 data += ofl_structs_state_stats_pack(msg->stats[i], data, exp);
             }
+            return 0;
+        }
+        case (OFPMP_EXP_STATE_STATS_NUM):
+        {
+            struct ofl_exp_msg_multipart_reply_state_num *msg = (struct ofl_exp_msg_multipart_reply_state_num *)e;
+            struct ofp_multipart_reply *resp;
+            struct ofp_exp_state_stats_num *stats;
+            struct ofp_experimenter_stats_header * exp_header;
+            
+            *buf_len = sizeof(struct ofp_multipart_reply) + sizeof(struct ofp_exp_state_stats_num);
+            *buf     = (uint8_t *)malloc(*buf_len);
+
+            resp = (struct ofp_multipart_reply *)(*buf);
+            stats = (struct ofp_exp_state_stats_num *)resp->body;
+            exp_header = (struct ofp_experimenter_stats_header *)stats;
+            
+            exp_header->experimenter = htonl(OPENSTATE_VENDOR_ID);
+            exp_header->exp_type = htonl(OFPMP_EXP_STATE_STATS_NUM);
+            memset(stats->pad, 0x00, 4);
+            stats->count=htonl(msg->count);
             return 0;
         }
         case (OFPMP_EXP_GLOBAL_STATE_STATS):
@@ -625,6 +665,28 @@ ofl_exp_openstate_stats_req_unpack(struct ofp_multipart_request *os, uint8_t* bu
             *msg = (struct ofl_msg_multipart_request_header *)dm;
             return 0;
         }
+        case (OFPMP_EXP_STATE_STATS_NUM):
+        {    
+            struct ofp_exp_state_stats_num_request *sm;
+            struct ofl_exp_msg_multipart_request_state_num *dm;
+            ofl_err error = 0;
+
+            sm = (struct ofp_exp_state_stats_num_request *)ext;
+            dm = (struct ofl_exp_msg_multipart_request_state_num *) malloc(sizeof(struct ofl_exp_msg_multipart_request_state_num));
+
+            //TODO: up to now we allow just single table statistics ()
+            if (sm->table_id == OFPTT_ALL || sm->table_id >= PIPELINE_TABLES) {
+                 OFL_LOG_WARN(LOG_MODULE, "Received MULTIPART REQUEST STATE message has invalid table id (%d).", sm->table_id );
+                 return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_TABLE_ID);
+            }
+
+            dm->header.type = ntohl(ext->exp_type);
+            dm->header.header.experimenter_id = ntohl(ext->experimenter);
+            dm->table_id = sm->table_id;
+            *len -= sizeof(struct ofp_exp_state_stats_num_request);
+            *msg = (struct ofl_msg_multipart_request_header *)dm;
+            return 0;
+        }
         case (OFPMP_EXP_GLOBAL_STATE_STATS):
         {
             struct ofl_exp_msg_multipart_request_global_state *dm;
@@ -683,6 +745,26 @@ ofl_exp_openstate_stats_reply_unpack(struct ofp_multipart_reply *os, uint8_t* bu
             *msg = (struct ofl_msg_multipart_request_header *)dm;
             return 0;
         }
+        case (OFPMP_EXP_STATE_STATS_NUM):
+        {
+            struct ofp_exp_state_stats_num *sm;
+            struct ofl_exp_msg_multipart_reply_state_num *dm;
+
+            if (*len < sizeof(struct ofp_exp_state_stats_num)) {
+                OFL_LOG_WARN(LOG_MODULE, "Received GLOBAL STATE stats reply has invalid length (%zu).", *len);
+                return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
+            }
+            *len -= sizeof(struct ofp_exp_state_stats_num);
+
+            sm = (struct ofp_exp_state_stats_num *)os->body;
+            dm = (struct ofl_exp_msg_multipart_reply_state_num *) malloc(sizeof(struct ofl_exp_msg_multipart_reply_state_num));
+            dm->header.type = ntohl(ext->exp_type);
+            dm->header.header.experimenter_id = ntohl(ext->experimenter);
+            dm->count =  ntohl(sm->count);
+
+            *msg = (struct ofl_msg_multipart_request_header *)dm;
+            return 0;
+        }
         case (OFPMP_EXP_GLOBAL_STATE_STATS):
         {
             struct ofp_exp_global_state_stats *sm;
@@ -726,6 +808,15 @@ ofl_exp_openstate_stats_request_to_string(struct ofl_msg_multipart_request_exper
                 fprintf(stream, "\", state=\"%lu\"", msg->state);
             fprintf(stream, "\", match=");
             ofl_structs_match_print(stream, msg->match, exp);
+            break;
+        }
+        case (OFPMP_EXP_STATE_STATS_NUM):
+        {
+            struct ofl_exp_msg_multipart_request_state_num *msg = (struct ofl_exp_msg_multipart_request_state_num *)e;
+            fprintf(stream, "{exp_type=\"");
+            ofl_exp_stats_type_print(stream, e->type);
+            fprintf(stream, "\", table=\"");
+            ofl_table_print(stream, msg->table_id);
             break;
         }
         case (OFPMP_EXP_GLOBAL_STATE_STATS):
@@ -775,6 +866,17 @@ ofl_exp_openstate_stats_reply_to_string(struct ofl_msg_multipart_reply_experimen
             fprintf(stream, "]");
             break;
         }
+        case (OFPMP_EXP_STATE_STATS_NUM):
+        {
+            struct ofl_exp_msg_multipart_reply_state_num *msg = (struct ofl_exp_msg_multipart_reply_state_num *)e;
+            size_t i;
+            size_t last_table_id = -1;
+            extern int colors;
+            fprintf(stream, "{stat_exp_type=\"");
+            ofl_exp_stats_type_print(stream, e->type);
+            fprintf(stream, "\", count=\"%"PRIu32"\"",msg->count);
+            break;
+        }
         case (OFPMP_EXP_GLOBAL_STATE_STATS):
         {
             struct ofl_exp_msg_multipart_reply_global_state *msg = (struct ofl_exp_msg_multipart_reply_global_state *)e;
@@ -802,9 +904,15 @@ ofl_exp_openstate_stats_req_free(struct ofl_msg_multipart_request_header *msg) {
             free(a);
             break;
         }
+        case (OFPMP_EXP_STATE_STATS_NUM):
+        {
+            struct ofl_exp_msg_multipart_request_state_num *a = (struct ofl_exp_msg_multipart_request_state_num *) ext;
+            free(a);
+            break;
+        }
         case (OFPMP_EXP_GLOBAL_STATE_STATS):
         {
-            struct ofl_exp_msg_multipart_request_state *a = (struct ofl_exp_msg_multipart_reqeust_state *) ext;
+            struct ofl_exp_msg_multipart_request_global_state *a = (struct ofl_exp_msg_multipart_request_global_state *) ext;
             free(a);
             break;
         }
@@ -826,9 +934,15 @@ ofl_exp_openstate_stats_reply_free(struct ofl_msg_multipart_reply_header *msg) {
             free(a);
             break;
         }
+        case (OFPMP_EXP_STATE_STATS_NUM):
+        {
+            struct ofl_exp_msg_multipart_reply_state_num *a = (struct ofl_exp_msg_multipart_reply_state_num *) ext;
+            free(a);
+            break;
+        }
         case (OFPMP_EXP_GLOBAL_STATE_STATS):
         {
-            struct ofl_exp_msg_multipart_reply_state *a = (struct ofl_exp_msg_multipart_reply_state *) ext;
+            struct ofl_exp_msg_multipart_reply_global_state *a = (struct ofl_exp_msg_multipart_reply_global_state *) ext;
             free(a);
             break;
         }
@@ -1628,6 +1742,19 @@ handle_stats_request_state(struct pipeline *pl, struct ofl_exp_msg_multipart_req
 }
 
 ofl_err
+handle_stats_request_state_num(struct pipeline *pl, struct ofl_exp_msg_multipart_request_state_num *msg, const struct sender *sender, struct ofl_exp_msg_multipart_reply_state_num *reply) {
+    if (state_table_is_stateful(pl->tables[msg->table_id]->state_table) && state_table_is_configured(pl->tables[msg->table_id]->state_table)){
+        *reply = (struct ofl_exp_msg_multipart_reply_state_num)
+            {{{{{.type = OFPT_MULTIPART_REPLY},
+              .type = OFPMP_EXPERIMENTER, .flags = 0x0000},
+             .experimenter_id = OPENSTATE_VENDOR_ID},
+             .type = OFPMP_EXP_STATE_STATS_NUM},
+             .count = (uint32_t) hmap_count(&pl->tables[msg->table_id]->state_table->state_entries)};
+    }    
+    return 0;
+}
+
+ofl_err
 handle_stats_request_global_state(struct pipeline *pl, const struct sender *sender, struct ofl_exp_msg_multipart_reply_global_state *reply) {
     uint32_t global_state = pl->dp->global_state;
     
@@ -2201,6 +2328,7 @@ void
 ofl_exp_stats_type_print(FILE *stream, uint32_t type) {
     switch (type) {
         case (OFPMP_EXP_STATE_STATS):          { fprintf(stream, "state"); return; }
+        case (OFPMP_EXP_STATE_STATS_NUM):          { fprintf(stream, "state_num"); return; }
         case (OFPMP_EXP_GLOBAL_STATE_STATS):          { fprintf(stream, "global_state"); return; }
         default: {                    fprintf(stream, "?(%u)", type); return; }
     }

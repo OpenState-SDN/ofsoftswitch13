@@ -547,6 +547,21 @@ stats_state(struct vconn *vconn, int argc, char *argv[]) {
 }
 
 static void
+stats_state_num(struct vconn *vconn, int argc, char *argv[]) {
+    uint8_t table_id=0xff;
+    parse8(argv[0], NULL, 0, 0xff, &table_id);
+
+    struct ofl_exp_msg_multipart_request_state_num req =   
+             {{{{{.type = OFPT_MULTIPART_REQUEST},
+                  .type = OFPMP_EXPERIMENTER, .flags = 0x0000},
+                 .experimenter_id = OPENSTATE_VENDOR_ID},
+                 .type = OFPMP_EXP_STATE_STATS_NUM},
+                 .table_id = table_id};
+
+    dpctl_transact_and_print(vconn, (struct ofl_msg_header *)&req, NULL);
+}
+
+static void
 stats_global_state(struct vconn *vconn, int argc, char *argv[]) {
     struct ofl_exp_msg_multipart_request_global_state req =
             {{{{{.type = OFPT_MULTIPART_REQUEST},
@@ -993,6 +1008,7 @@ static struct command all_commands[] = {
     {"stats-desc", 0, 0, stats_desc },
     {"stats-flow", 0, 2, stats_flow},
     {"stats-state", 0, 3, stats_state},
+    {"stats-state-num", 1, 1, stats_state_num},
     {"stats-global-state", 0, 0, stats_global_state},
     {"stats-aggr", 0, 2, stats_aggr},
     {"stats-table", 0, 0, stats_table },

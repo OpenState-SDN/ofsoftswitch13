@@ -118,6 +118,18 @@ struct ofl_exp_msg_multipart_reply_state {
     struct ofl_exp_state_stats **stats;
 };
 
+struct ofl_exp_msg_multipart_request_state_num {
+    struct ofl_exp_openstate_msg_multipart_request   header; /* OFPMP_STATE_NUM */
+    uint8_t                  table_id; /* ID of table to read
+                                           (from ofp_table_multipart), 0xff for all
+                                           tables. */
+};
+
+struct ofl_exp_msg_multipart_reply_state_num {
+    struct ofl_exp_openstate_msg_multipart_reply   header; /* OFPMP_STATE_NUM */
+    uint32_t count;
+};
+
 struct ofl_exp_msg_multipart_request_global_state {
     struct ofl_exp_openstate_msg_multipart_request   header; /* OFPMP_GLOBAL_STATE */
 };
