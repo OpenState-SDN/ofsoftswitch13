@@ -66,16 +66,16 @@ ofl_msg_pack_error(struct ofl_msg_error const *msg, uint8_t **buf, size_t *buf_l
             break;
         }
         default: {
-		struct ofp_error_msg *err;
-		*buf_len = sizeof(struct ofp_error_msg) + msg->data_length;
-		*buf     = (uint8_t *)malloc(*buf_len);
+    struct ofp_error_msg *err;
+    *buf_len = sizeof(struct ofp_error_msg) + msg->data_length;
+    *buf     = (uint8_t *)malloc(*buf_len);
 
-		err = (struct ofp_error_msg *)(*buf);
-		err->type = htons(msg->type);
-		err->code = htons(msg->code);
-		memcpy(err->data, msg->data, msg->data_length);
-		break;
-	}
+    err = (struct ofp_error_msg *)(*buf);
+    err->type = htons(msg->type);
+    err->code = htons(msg->code);
+    memcpy(err->data, msg->data, msg->data_length);
+            break;
+        }
     }
     return error;
 }

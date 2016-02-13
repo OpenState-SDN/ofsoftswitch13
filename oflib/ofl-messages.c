@@ -1,5 +1,5 @@
 /* Copyright (c) 2011, TrafficLab, Ericsson Research, Hungary
- * Copyright (c) 2012, CPqD, Brazil
+ * Copyright (c) 2012, CPqD, Brazil    
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,9 +62,9 @@ ofl_msg_free_error(struct ofl_msg_error *msg, struct ofl_exp const *exp)
             }
 	} break;
         default: {
-		free(msg->data);
-		free(msg);
-	}
+    free(msg->data);
+    free(msg);
+    }
     }
     return 0;
 }
@@ -95,7 +95,7 @@ ofl_msg_free_multipart_request(struct ofl_msg_multipart_request_header *msg, str
             struct ofl_msg_multipart_request_table_features *m = (struct ofl_msg_multipart_request_table_features *)msg;
             OFL_UTILS_FREE_ARR_FUN2(m->table_features, m->tables_num,
                                     ofl_structs_free_table_features, exp);
-            break;
+            break; 
         }
         case OFPMP_PORT_DESC:
             break;
@@ -164,13 +164,13 @@ ofl_msg_free_multipart_reply(struct ofl_msg_multipart_reply_header *msg, struct 
         case OFPMP_METER:{
             struct ofl_msg_multipart_reply_meter *stat = (struct ofl_msg_multipart_reply_meter*)msg;
             OFL_UTILS_FREE_ARR_FUN(stat->stats, stat->stats_num,
-                                   ofl_structs_free_meter_stats);
+                                   ofl_structs_free_meter_stats);            
             break;
         }
         case OFPMP_METER_CONFIG:{
             struct ofl_msg_multipart_reply_meter_conf *conf = (struct ofl_msg_multipart_reply_meter_conf *)msg;
             OFL_UTILS_FREE_ARR_FUN(conf->stats, conf->stats_num,
-                                   ofl_structs_free_meter_config);
+                                   ofl_structs_free_meter_config);             
             break;
         }
         case OFPMP_METER_FEATURES:{
@@ -185,16 +185,16 @@ ofl_msg_free_multipart_reply(struct ofl_msg_multipart_reply_header *msg, struct 
             break;
         }
         case OFPMP_PORT_DESC:{
-            struct ofl_msg_multipart_reply_port_desc *stat = (struct ofl_msg_multipart_reply_port_desc *)msg;
+            struct ofl_msg_multipart_reply_port_desc *stat = (struct ofl_msg_multipart_reply_port_desc *)msg;        
             OFL_UTILS_FREE_ARR_FUN(stat->stats, stat->stats_num,
                                     ofl_structs_free_port);
-            break;
+            break;            
         }
         case OFPMP_TABLE_FEATURES:{
             struct ofl_msg_multipart_reply_table_features *m = (struct ofl_msg_multipart_reply_table_features *)msg;
             OFL_UTILS_FREE_ARR_FUN2(m->table_features, m->tables_num,
                                     ofl_structs_free_table_features, exp);
-            break;
+            break;        
         }
         case OFPMP_EXPERIMENTER: {
             if (exp == NULL || exp->stats == NULL || exp->stats->reply_free == NULL) {
@@ -313,12 +313,12 @@ ofl_msg_free(struct ofl_msg_header *msg, struct ofl_exp const *exp)
             break;
         }
     }
-
+    
     free(msg);
     return 0;
 }
 
-int
+int 
 ofl_msg_free_meter_mod(struct ofl_msg_meter_mod * msg, bool with_bands)
 {
     if (with_bands) {
@@ -448,7 +448,7 @@ ofl_msg_merge_multipart_request_table_features(struct ofl_msg_multipart_request_
 	  case OFPTFPT_WRITE_SETFIELD:
 	  case OFPTFPT_WRITE_SETFIELD_MISS:
 	  case OFPTFPT_APPLY_SETFIELD:
-	  case OFPTFPT_APPLY_SETFIELD_MISS: {
+	  case OFPTFPT_APPLY_SETFIELD_MISS: { 
 	    struct ofl_table_feature_prop_oxm *old_prop_o = (struct ofl_table_feature_prop_oxm*) old_prop;
 	    struct ofl_table_feature_prop_oxm *new_prop_o;
 	    new_prop_o = (struct ofl_table_feature_prop_oxm*) malloc(sizeof(struct ofl_table_feature_prop_oxm));

@@ -54,7 +54,7 @@ static struct vlog_rate_limit rl = VLOG_RATE_LIMIT_INIT(60, 60);
 
 void
 dp_exp_action(struct packet *pkt, struct ofl_action_experimenter *act) {
-
+    
     if(act->experimenter_id == OPENSTATE_VENDOR_ID)
     {
         struct ofl_exp_openstate_act_header *action;
@@ -72,19 +72,19 @@ dp_exp_action(struct packet *pkt, struct ofl_action_experimenter *act) {
                 }
                 else
                 {
-                    VLOG_DBG_RL(LOG_MODULE, &rl, "ERROR NEXT STATE at stage %u: stage not stateful", wns->table_id);
+                    VLOG_WARN_RL(LOG_MODULE, &rl, "ERROR NEXT STATE at stage %u: stage not stateful", wns->table_id);
                 }
                 break;
             }
-            case (OFPAT_EXP_SET_GLOBAL_STATE):
+            case (OFPAT_EXP_SET_GLOBAL_STATE): 
             {
                 struct ofl_exp_action_set_global_state *wns = (struct ofl_exp_action_set_global_state *)action;
                 uint32_t global_state = pkt->dp->global_state;
-
+                
                 global_state = (global_state & ~(wns->global_state_mask)) | (wns->global_state & wns->global_state_mask);
                 pkt->dp->global_state = global_state;
                  break;
-            }
+            }  
             default:
                 VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to execute unknown experimenter action (%u).", htonl(act->experimenter_id));
                 break;
@@ -115,6 +115,13 @@ dp_exp_stats(struct datapath *dp UNUSED, struct ofl_msg_multipart_request_experi
                     err = handle_stats_request_state(dp->pipeline, (struct ofl_exp_msg_multipart_request_state *)msg, sender, &reply);
                     dp_send_message(dp, (struct ofl_msg_header *)&reply, sender);
                     free(reply.stats);
+                    ofl_msg_free((struct ofl_msg_header *)msg, dp->exp);
+                    return err;
+                }
+                case (OFPMP_EXP_STATE_STATS_NUM): {
+                    struct ofl_exp_msg_multipart_reply_state_num reply;
+                    err = handle_stats_request_state_num(dp->pipeline, (struct ofl_exp_msg_multipart_request_state_num *)msg, sender, &reply);
+                    dp_send_message(dp, (struct ofl_msg_header *)&reply, sender);
                     ofl_msg_free((struct ofl_msg_header *)msg, dp->exp);
                     return err;
                 }
@@ -167,7 +174,7 @@ dp_exp_message(struct datapath *dp, struct ofl_msg_experimenter *msg, const stru
             switch(exp->type) {
                 case (OFPT_EXP_STATE_MOD): {
                     return handle_state_mod(dp->pipeline, (struct ofl_exp_msg_state_mod *)msg, sender);
-                    }
+                }
                 default: {
                     VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to handle unknown experimenter type (%u).", exp->type);
                     return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_EXP_MESSAGE);

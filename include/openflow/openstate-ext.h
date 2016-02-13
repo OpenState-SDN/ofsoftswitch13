@@ -149,6 +149,7 @@ enum ofp_exp_msg_state_mod_commands {
 ****************************************************************/
 enum ofp_stats_extension_commands {
     OFPMP_EXP_STATE_STATS,      
+    OFPMP_EXP_STATE_STATS_NUM,
     OFPMP_EXP_GLOBAL_STATE_STATS
 };
 
@@ -192,6 +193,23 @@ struct ofp_exp_state_stats {
     uint32_t idle_timeout; // [us]
 };
 OFP_ASSERT(sizeof(struct ofp_exp_state_stats) == 112);
+
+/* Body for ofp_multipart_request of type OFPMP_EXP_STATE_STATS_NUM. */
+struct ofp_exp_state_stats_num_request {
+    struct ofp_experimenter_stats_header header;
+    uint8_t                 table_id;       /* ID of table to read (from ofp_table_stats),
+                               OFPTT_ALL for all tables. */
+    uint8_t                 pad[7];         /* Align to 64 bits. */
+};
+OFP_ASSERT(sizeof(struct ofp_exp_state_stats_num_request) == 16);
+
+/* Body of reply to OFPMP_EXP_STATE_STATS_NUM request. */
+struct ofp_exp_state_stats_num {
+    struct ofp_experimenter_stats_header header;
+    uint32_t count;
+    uint8_t pad[4];
+};
+OFP_ASSERT(sizeof(struct ofp_exp_state_stats_num) == 16);
 
 /****************************************************************
  *

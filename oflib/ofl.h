@@ -198,7 +198,7 @@ ofl_error_code(ofl_err error)
     return error & 0x0000ffff;
 }
 
-static inline void
+static inline void 
 ofl_enable_colors(void)
 {
     colors = 1;
