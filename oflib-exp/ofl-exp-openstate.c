@@ -2528,7 +2528,7 @@ ofl_structs_match_exp_put64m(struct ofl_match *match, uint32_t header, uint32_t 
 uint32_t
 get_experimenter_id(struct ofl_msg_header const *msg)
 {
-    uint32_t exp_id;
+    uint32_t exp_id = 0;
 
     /*check if the msg that triggers the err is experimenter*/
     if (msg->type == OFPT_EXPERIMENTER){
@@ -2560,7 +2560,6 @@ get_experimenter_id(struct ofl_msg_header const *msg)
         }
     }
 
-    // FIXME
     return exp_id;
 }
 
@@ -2575,7 +2574,6 @@ get_experimenter_id_from_match(struct ofl_match const *flow_mod_match)
             case(OFPXMC_EXPERIMENTER):
                 return *((uint32_t*) (f->value));
         }
-
     }
     return 0;
 }
@@ -2590,7 +2588,6 @@ get_experimenter_id_from_action(struct ofl_instruction_actions const *act)
            return ((struct ofl_action_experimenter *)action)->experimenter_id;
         }
     }
-
-    return (uint32_t)-1;
+    return 0;
 }
 
