@@ -54,17 +54,40 @@ static ofl_err
 ofl_msg_unpack_error(struct ofp_header const *src, size_t *len, struct ofl_msg_header **msg)
 {
     struct ofp_error_msg *se;
+    struct ofp_error_experimenter_msg *sexpe;
     struct ofl_msg_error *de;
+    struct ofl_msg_exp_error *dexpe;
 
+    /*sizeof(struct ofp_error_msg) < sizeof(struct ofp_error_experimenter_msg)*/
     if (*len < sizeof(struct ofp_error_msg)) {
         OFL_LOG_WARN(LOG_MODULE, "Received ERROR message invalid length (%zu).", *len);
         return OFL_ERROR;
     }
-    *len -= sizeof(struct ofp_error_msg);
 
     se = (struct ofp_error_msg *)src;
 
+    switch(se->type){
+        case (OFPET_EXPERIMENTER):{
+            sexpe = (struct ofp_error_experimenter_msg *)src;
+            dexpe = (struct ofl_msg_exp_error *)malloc(sizeof(struct ofl_msg_exp_error));
+            *len -= sizeof(struct ofp_error_experimenter_msg);
+
+            dexpe->type = (enum ofp_error_type)ntohs(sexpe->type);
+            dexpe->exp_type = ntohs(sexpe->exp_type);
+            dexpe->experimenter = ntohl(sexpe->experimenter);
+            dexpe->data_length = *len;
+            dexpe->data = *len > 0 ? (uint8_t *)memcpy(malloc(*len), sexpe->data, *len) : NULL;
+            *len = 0;
+
+            (*msg) = (struct ofl_msg_header *)dexpe;
+
+            break;
+            }
+
+        default: {
     de = (struct ofl_msg_error *)malloc(sizeof(struct ofl_msg_error));
+
+            *len -= sizeof(struct ofp_error_msg);
 
     de->type = (enum ofp_error_type)ntohs(se->type);
     de->code = ntohs(se->code);
@@ -73,6 +96,9 @@ ofl_msg_unpack_error(struct ofp_header const *src, size_t *len, struct ofl_msg_h
     *len = 0;
 
     (*msg) = (struct ofl_msg_header *)de;
+            break;
+        }
+    }
     return 0;
 }
 
@@ -219,7 +245,7 @@ ofl_msg_unpack_async_config(struct ofp_header const *src, size_t *len, struct of
 
 
 static ofl_err
-ofl_msg_unpack_packet_in(struct ofp_header const *src, uint8_t const* buf, size_t *len, struct ofl_msg_header **msg)
+ofl_msg_unpack_packet_in(struct ofp_header const *src, uint8_t const* buf, size_t *len, struct ofl_msg_header **msg, struct ofl_exp const *exp)
 {
     struct ofp_packet_in *sp;
     struct ofl_msg_packet_in *dp;
@@ -261,7 +287,7 @@ ofl_msg_unpack_packet_in(struct ofp_header const *src, uint8_t const* buf, size_
     dp->cookie = ntoh64(sp->cookie);
 
     ptr = buf + (sizeof(struct ofp_packet_in)-4);
-    ofl_structs_match_unpack(&(sp->match), ptr, len ,&(dp->match), 1, NULL);
+    ofl_structs_match_unpack(&(sp->match),ptr, len ,&(dp->match), 1, exp);
 
     ptr = buf + ROUND_UP(sizeof(struct ofp_packet_in)-4 + dp->match->length,8) + 2;
     /* Minus padding bytes */
@@ -475,15 +501,13 @@ ofl_msg_unpack_flow_mod(struct ofp_header const *src, uint8_t const* buf, size_t
 
     match_pos = sizeof(struct ofp_flow_mod) - 4;
     error = ofl_structs_match_unpack(&(sm->match), buf + match_pos, len, &(dm->match), 1, exp);
+    *msg = (struct ofl_msg_header *)dm;
     if (error) {
-        free(dm);
         return error;
     }
 
     error = ofl_utils_count_ofp_instructions((struct ofp_instruction *)(buf + ROUND_UP(match_pos + dm->match->length,8)), *len, &dm->instructions_num);
     if (error) {
-        ofl_structs_free_match(dm->match, exp);
-        free(dm);
         return error;
     }
 
@@ -492,15 +516,10 @@ ofl_msg_unpack_flow_mod(struct ofp_header const *src, uint8_t const* buf, size_t
     for (i = 0; i < dm->instructions_num; i++) {
         error = ofl_structs_instructions_unpack(inst, len, &(dm->instructions[i]), exp);
         if (error) {
-            OFL_UTILS_FREE_ARR_FUN2(dm->instructions, i,
-                    ofl_structs_free_instruction, exp);
-            ofl_structs_free_match(dm->match, exp);
-            free(dm);
             return error;
         }
         inst = (struct ofp_instruction *)((uint8_t *)inst + ntohs(inst->len));
     }
-    *msg = (struct ofl_msg_header *)dm;
     return 0;
 }
 
@@ -1458,7 +1477,7 @@ ofl_msg_unpack_multipart_reply(struct ofp_header const *src, uint8_t const *buf,
             break;
         }
         case OFPMP_FLOW: {
-            error = ofl_msg_unpack_multipart_reply_flow(os, buf, len, msg, exp);
+            error = ofl_msg_unpack_multipart_reply_flow(os,buf, len, msg, exp);
             break;
         }
         case OFPMP_AGGREGATE: {
@@ -1685,10 +1704,10 @@ ofl_msg_unpack(uint8_t const *buf, size_t buf_len, struct ofl_msg_header **msg, 
 
         /* Asynchronous messages. */
         case OFPT_PACKET_IN:
-            error = ofl_msg_unpack_packet_in(oh, buf, &len, msg);
+            error = ofl_msg_unpack_packet_in(oh, buf, &len, msg, exp);
             break;
         case OFPT_FLOW_REMOVED:
-            error = ofl_msg_unpack_flow_removed(oh, buf, &len, msg, exp);
+            error = ofl_msg_unpack_flow_removed(oh,buf, &len, msg, exp);
             break;
         case OFPT_PORT_STATUS:
             error = ofl_msg_unpack_port_status(oh, &len, msg);
@@ -1721,10 +1740,10 @@ ofl_msg_unpack(uint8_t const *buf, size_t buf_len, struct ofl_msg_header **msg, 
 
         /* Statistics messages. */
         case OFPT_MULTIPART_REQUEST:
-            error = ofl_msg_unpack_multipart_request(oh, buf, &len, msg, exp);
+            error = ofl_msg_unpack_multipart_request(oh,buf, &len, msg, exp);
             break;
         case OFPT_MULTIPART_REPLY:
-            error = ofl_msg_unpack_multipart_reply(oh, buf, &len, msg, exp);
+            error = ofl_msg_unpack_multipart_reply(oh,buf, &len, msg, exp);
             break;
 
         /* Barrier messages. */
@@ -1747,12 +1766,14 @@ ofl_msg_unpack(uint8_t const *buf, size_t buf_len, struct ofl_msg_header **msg, 
             error = ofl_msg_unpack_queue_get_config_reply(oh, &len, msg);
             break;
         case OFPT_METER_MOD:
-		error = ofl_msg_unpack_meter_mod(oh, &len, msg);
-		break;
+        	error = ofl_msg_unpack_meter_mod(oh, &len, msg);
+        	break;
 		default: {
             error = ofl_error(OFPET_BAD_REQUEST, OFPGMFC_BAD_TYPE);
         }
     }
+
+    (*msg)->type = (enum ofp_type)oh->type;
 
     if (error) {
         if (OFL_LOG_IS_DBG_ENABLED(LOG_MODULE)) {
@@ -1778,8 +1799,6 @@ ofl_msg_unpack(uint8_t const *buf, size_t buf_len, struct ofl_msg_header **msg, 
             free(str);
         }
     }
-
-    (*msg)->type = (enum ofp_type)oh->type;
 
     return 0;
 }

@@ -37,26 +37,25 @@
 #include "../oflib/ofl-messages.h"
 
 
-struct ofl_exp_openflow_msg_header {
+struct ofl_exp_openflow_msg_header
+{
     struct ofl_msg_experimenter   header; /* OPENFLOW_VENDOR_ID */
-
     uint32_t   type;
 };
 
-struct ofl_exp_openflow_msg_queue {
+struct ofl_exp_openflow_msg_queue
+{
     struct ofl_exp_openflow_msg_header   header; /* OFP_EXT_QUEUE_MODIFY|DELETE */
-
     uint32_t                  port_id;
     struct ofl_packet_queue  *queue;
 };
 
 
-struct ofl_exp_openflow_msg_set_dp_desc {
+struct ofl_exp_openflow_msg_set_dp_desc
+{
     struct ofl_exp_openflow_msg_header   header; /* OFP_EXT_SET_DESC */
-
     char  *dp_desc;
 };
-
 
 
 int
@@ -90,5 +89,7 @@ ofl_exp_openflow_act_free(struct ofl_action_header *act);
 char *
 ofl_exp_openflow_act_to_string(struct ofl_action_header const *act);
 
+void
+ofl_error_openstate_exp_type_print(FILE *stream, uint16_t exp_type);
 
 #endif /* OFL_EXP_OPENFLOW_H */

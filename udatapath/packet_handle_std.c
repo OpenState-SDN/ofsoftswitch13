@@ -410,11 +410,11 @@ packet_handle_std_validate(struct packet_handle_std *handle) {
     uint64_t tunnel_id = 0;
     uint32_t state = 0;
     bool has_state = false;
-    uint32_t current_global_state = OFP_GLOBAL_STATES_DEFAULT;
+    uint32_t current_global_state = OFP_GLOBAL_STATE_DEFAULT;
 
-    if (handle->valid)
-	return;
-
+    if(handle->valid)
+        return;
+    
     HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv, hmap_node,
         hash_int(OXM_OF_METADATA,0), &handle->match.match_fields){
         metadata = (uint64_t) *f->value;
@@ -428,24 +428,24 @@ packet_handle_std_validate(struct packet_handle_std *handle) {
     HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv, hmap_node,
         hash_int(OXM_EXP_STATE,0), & handle->match.match_fields){
         state = (uint32_t) *(f->value + EXP_ID_LEN);
-        has_state = true;
+                    has_state = true;
     }
 
-    HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv, hmap_node,
-        hash_int(OXM_EXP_FLAGS,0), & handle->match.match_fields){
-        current_global_state = (uint32_t) *(f->value + EXP_ID_LEN);
+    HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv, hmap_node, 
+            hash_int(OXM_EXP_GLOBAL_STATE,0), &handle->match.match_fields){
+            current_global_state = (uint32_t) *(f->value + EXP_ID_LEN);
     }
 
     HMAP_FOR_EACH_SAFE(iter, next, struct ofl_match_tlv, hmap_node, &handle->match.match_fields)
     {
-	free(iter->value);
-	free(iter);
+        free(iter->value);
+        free(iter);
     }
 
     ofl_structs_match_init(&handle->match);
 
     if (packet_parse(handle->pkt, &handle->match, handle->proto) < 0)
-	return;
+        return;
 
     handle->valid = true;
 
@@ -453,7 +453,7 @@ packet_handle_std_validate(struct packet_handle_std *handle) {
     ofl_structs_match_put32(&handle->match, OXM_OF_IN_PORT, handle->pkt->in_port);
 
     /* Add global register value to the hash_map */
-    ofl_structs_match_exp_put32(&handle->match, OXM_EXP_FLAGS, 0xBEBABEBA, current_global_state);
+    ofl_structs_match_exp_put32(&handle->match, OXM_EXP_GLOBAL_STATE, 0xBEBABEBA, current_global_state);
 
     if(has_state)
     {

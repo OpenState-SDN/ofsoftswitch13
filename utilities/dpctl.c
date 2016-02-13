@@ -230,13 +230,19 @@ static struct ofl_exp_field dpctl_exp_field =
          .overlap_a  = ofl_exp_field_overlap_a,
          .overlap_b  = ofl_exp_field_overlap_b};
 
+static struct ofl_exp_err dpctl_exp_err =
+        {.pack      = ofl_exp_err_pack,
+         .free      = ofl_exp_err_free,
+         .to_string = ofl_exp_err_to_string};
+
 static struct ofl_exp dpctl_exp =
         {.act   = &dpctl_exp_act,
          .inst  = NULL,
          .match = NULL,
          .stats = &dpctl_exp_stats,
          .msg   = &dpctl_exp_msg,
-         .field = &dpctl_exp_field};
+         .field = &dpctl_exp_field,
+         .err   = &dpctl_exp_err};
 
 
 static void
@@ -555,13 +561,13 @@ stats_state(struct vconn *vconn, int argc, char *argv[])
 }
 
 static void
-stats_global_state(struct vconn *vconn, int argc, char *argv[])
+stats_global_state(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED)
 {
     struct ofl_exp_msg_multipart_request_global_state req =
             {{{{{.type = OFPT_MULTIPART_REQUEST},
                 .type = OFPMP_EXPERIMENTER, .flags = 0x0000},
                  .experimenter_id = OPENSTATE_VENDOR_ID},
-                 .type = OFPMP_EXP_FLAGS_STATS}};
+                 .type = OFPMP_EXP_GLOBAL_STATE_STATS}};
     dpctl_transact_and_print(vconn, (struct ofl_msg_header *)&req, NULL);
 }
 
@@ -923,7 +929,6 @@ set_desc(struct vconn *vconn, int argc UNUSED, char *argv[])
 
     dpctl_send_and_print(vconn, (struct ofl_msg_header *)&msg);
 }
-
 
 
 static void
@@ -1993,7 +1998,8 @@ parse_set_field(char *token, struct ofl_action_set_field *act)
 }
 
 static void
-make_all_match(struct ofl_match_header **match) {
+make_all_match(struct ofl_match_header **match)
+{
     struct ofl_match *m = xmalloc(sizeof(struct ofl_match));
 
     ofl_structs_match_init(m);
@@ -2003,7 +2009,8 @@ make_all_match(struct ofl_match_header **match) {
 
 
 static void
-parse_action(uint16_t type, char *str, struct ofl_action_header **act) {
+parse_action(uint16_t type, char *str, struct ofl_action_header **act)
+{
     switch (type) {
         case (OFPAT_OUTPUT): {
             char *token, *saveptr = NULL;
@@ -2112,7 +2119,8 @@ parse_action(uint16_t type, char *str, struct ofl_action_header **act) {
 }
 
 static void
-parse_actions(char *str, size_t *acts_num, struct ofl_action_header ***acts) {
+parse_actions(char *str, size_t *acts_num, struct ofl_action_header ***acts)
+{
     char *token, *saveptr = NULL;
     char *s;
     size_t i;
@@ -2145,9 +2153,9 @@ parse_actions(char *str, size_t *acts_num, struct ofl_action_header ***acts) {
 }
 
 
-
 static void
-parse_inst(char *str, struct ofl_instruction_header **inst) {
+parse_inst(char *str, struct ofl_instruction_header **inst)
+{
     size_t i;
     char *s;
     for (i=0; i<NUM_ELEMS(inst_names); i++) {
@@ -2227,7 +2235,8 @@ parse_inst(char *str, struct ofl_instruction_header **inst) {
 }
 
 static void
-parse_state(char *str, uint8_t *get_from_state, uint32_t *state) {
+parse_state(char *str, uint8_t *get_from_state, uint32_t *state)
+{
     char *token, *saveptr = NULL;
     for (token = strtok_r(str, KEY_SEP, &saveptr); token != NULL; token = strtok_r(NULL, KEY_SEP, &saveptr)) {
         if (strncmp(token, "state" KEY_VAL, strlen("state" KEY_VAL)) == 0) {
@@ -2241,8 +2250,10 @@ parse_state(char *str, uint8_t *get_from_state, uint32_t *state) {
     }
 }
 
+
 static void
-parse_state_stat_args(char *str, struct ofl_exp_msg_multipart_request_state *req) {
+parse_state_stat_args(char *str, struct ofl_exp_msg_multipart_request_state *req)
+{
     char *token, *saveptr = NULL;
     for (token = strtok_r(str, KEY_SEP, &saveptr); token != NULL; token = strtok_r(NULL, KEY_SEP, &saveptr)) {
         if (strncmp(token, FLOW_MOD_TABLE_ID KEY_VAL, strlen(FLOW_MOD_TABLE_ID KEY_VAL)) == 0) {
@@ -2255,8 +2266,10 @@ parse_state_stat_args(char *str, struct ofl_exp_msg_multipart_request_state *req
     }
 }
 
+
 static void
-parse_flow_stat_args(char *str, struct ofl_msg_multipart_request_flow *req) {
+parse_flow_stat_args(char *str, struct ofl_msg_multipart_request_flow *req)
+{
     char *token, *saveptr = NULL;
 
     for (token = strtok_r(str, KEY_SEP, &saveptr); token != NULL; token = strtok_r(NULL, KEY_SEP, &saveptr)) {
@@ -2297,7 +2310,8 @@ parse_flow_stat_args(char *str, struct ofl_msg_multipart_request_flow *req) {
 
 
 static void
-parse_flow_mod_args(char *str, struct ofl_msg_flow_mod *req) {
+parse_flow_mod_args(char *str, struct ofl_msg_flow_mod *req)
+{
     char *token, *saveptr = NULL;
 
     for (token = strtok_r(str, KEY_SEP, &saveptr); token != NULL; token = strtok_r(NULL, KEY_SEP, &saveptr)) {
@@ -2374,7 +2388,8 @@ parse_flow_mod_args(char *str, struct ofl_msg_flow_mod *req) {
 }
 
 static void
-parse_group_mod_args(char *str, struct ofl_msg_group_mod *req) {
+parse_group_mod_args(char *str, struct ofl_msg_group_mod *req)
+{
     char *token, *saveptr = NULL;
 
     for (token = strtok_r(str, KEY_SEP, &saveptr); token != NULL; token = strtok_r(NULL, KEY_SEP, &saveptr)) {
@@ -2405,7 +2420,8 @@ parse_group_mod_args(char *str, struct ofl_msg_group_mod *req) {
 }
 
 static void
-parse_bucket(char *str, struct ofl_bucket *b) {
+parse_bucket(char *str, struct ofl_bucket *b)
+{
     char *token, *saveptr = NULL;
 
     for (token = strtok_r(str, KEY_SEP, &saveptr); token != NULL; token = strtok_r(NULL, KEY_SEP, &saveptr)) {
@@ -2432,7 +2448,8 @@ parse_bucket(char *str, struct ofl_bucket *b) {
 }
 
 static void
-parse_meter_mod_args(char *str, struct ofl_msg_meter_mod *req){
+parse_meter_mod_args(char *str, struct ofl_msg_meter_mod *req)
+{
     char *token, *saveptr = NULL;
 
     for (token = strtok_r(str, KEY_SEP, &saveptr); token != NULL; token = strtok_r(NULL, KEY_SEP, &saveptr)) {
@@ -2464,7 +2481,8 @@ parse_meter_mod_args(char *str, struct ofl_msg_meter_mod *req){
 }
 
 static void
-parse_band_args(char *str, struct ofl_msg_meter_mod *m, struct ofl_meter_band_header *b){
+parse_band_args(char *str, struct ofl_msg_meter_mod *m, struct ofl_meter_band_header *b)
+{
     char *token, *saveptr = NULL;
     for (token = strtok_r(str, KEY_SEP, &saveptr); token != NULL; token = strtok_r(NULL, KEY_SEP, &saveptr)) {
         if (strncmp(token, BAND_RATE KEY_VAL, strlen(BAND_RATE KEY_VAL)) == 0) {
@@ -2494,7 +2512,8 @@ parse_band_args(char *str, struct ofl_msg_meter_mod *m, struct ofl_meter_band_he
 }
 
 static void
-parse_band(char *str, struct ofl_msg_meter_mod *m, struct ofl_meter_band_header **b){
+parse_band(char *str, struct ofl_msg_meter_mod *m, struct ofl_meter_band_header **b)
+{
     char *s;
     size_t i;
     for (i=0; i<NUM_ELEMS(band_names); i++) {
@@ -2534,7 +2553,8 @@ parse_band(char *str, struct ofl_msg_meter_mod *m, struct ofl_meter_band_header 
 
 
 static void
-parse_config(char *str, struct ofl_config *c) {
+parse_config(char *str, struct ofl_config *c)
+{
     char *token, *saveptr = NULL;
 
     for (token = strtok_r(str, KEY_SEP, &saveptr); token != NULL; token = strtok_r(NULL, KEY_SEP, &saveptr)) {
@@ -2555,7 +2575,8 @@ parse_config(char *str, struct ofl_config *c) {
 }
 
 static void
-parse_port_mod(char *str, struct ofl_msg_port_mod *msg) {
+parse_port_mod(char *str, struct ofl_msg_port_mod *msg)
+{
     char *token, *saveptr = NULL;
 
     for (token = strtok_r(str, KEY_SEP, &saveptr); token != NULL; token = strtok_r(NULL, KEY_SEP, &saveptr)) {
@@ -2596,7 +2617,8 @@ parse_port_mod(char *str, struct ofl_msg_port_mod *msg) {
 
 
 static void
-parse_table_mod(char *str, struct ofl_msg_table_mod *msg) {
+parse_table_mod(char *str, struct ofl_msg_table_mod *msg)
+{
     char *token, *saveptr = NULL;
 
     for (token = strtok_r(str, KEY_SEP, &saveptr); token != NULL; token = strtok_r(NULL, KEY_SEP, &saveptr)) {
@@ -2618,32 +2640,38 @@ parse_table_mod(char *str, struct ofl_msg_table_mod *msg) {
 
 
 static int
-parse_port(char *str, uint32_t *port) {
+parse_port(char *str, uint32_t *port)
+{
     return parse32(str, port_names, NUM_ELEMS(port_names), OFPP_MAX, port);
 }
 
 static int
-parse_queue(char *str, uint32_t *port) {
+parse_queue(char *str, uint32_t *port)
+{
     return parse32(str, queue_names, NUM_ELEMS(queue_names), 0xfffffffe, port);
 }
 
 static int
-parse_group(char *str, uint32_t *group) {
+parse_group(char *str, uint32_t *group)
+{
     return parse32(str, group_names, NUM_ELEMS(group_names), OFPG_MAX, group);
 }
 
 static int
-parse_meter(char *str, uint32_t *meter) {
+parse_meter(char *str, uint32_t *meter)
+{
     return parse32(str, NULL, 0, OFPM_MAX, meter);
 }
 
 static int
-parse_table(char *str, uint8_t *table) {
+parse_table(char *str, uint8_t *table)
+{
     return parse8(str, table_names, NUM_ELEMS(table_names), 0xfe, table);
 }
 
 static int
-parse_dl_addr(char *str, uint8_t *addr, uint8_t **mask) {
+parse_dl_addr(char *str, uint8_t *addr, uint8_t **mask)
+{
     char *saveptr = NULL;
     if (sscanf(str, "%"SCNx8":%"SCNx8":%"SCNx8":%"SCNx8":%"SCNx8":%"SCNx8,
             addr, addr+1, addr+2, addr+3, addr+4, addr+5) != 6){
@@ -2666,7 +2694,8 @@ parse_dl_addr(char *str, uint8_t *addr, uint8_t **mask) {
 }
 
 static int
-parse_nw_addr(char *str, uint32_t *addr, uint32_t **mask) {
+parse_nw_addr(char *str, uint32_t *addr, uint32_t **mask)
+{
     // TODO Zoltan: DNS lookup ?
     uint8_t a[4],b[4];
     uint32_t netmask;
@@ -2713,12 +2742,14 @@ parse_nw_addr(char *str, uint32_t *addr, uint32_t **mask) {
 }
 
 static int
-parse_vlan_vid(char *str, uint16_t *vid) {
+parse_vlan_vid(char *str, uint16_t *vid)
+{
     return parse16(str, vlan_vid_names, NUM_ELEMS(vlan_vid_names), 0xfff, vid);
 }
 
 static int
-parse_ext_hdr(char *str, uint16_t *ext_hdr){
+parse_ext_hdr(char *str, uint16_t *ext_hdr)
+{
     char *token, *saveptr = NULL;
     size_t i;
     memset(ext_hdr, 0x0, sizeof(uint16_t));
@@ -2736,7 +2767,8 @@ parse_ext_hdr(char *str, uint16_t *ext_hdr){
 }
 
 static int
-parse8(char *str, struct names8 *names, size_t names_num, uint8_t max, uint8_t *val) {
+parse8(char *str, struct names8 *names, size_t names_num, uint8_t max, uint8_t *val)
+{
     size_t i;
 
     for (i=0; i<names_num; i++) {
@@ -2753,7 +2785,8 @@ parse8(char *str, struct names8 *names, size_t names_num, uint8_t max, uint8_t *
 }
 
 static int
-parse16(char *str, struct names16 *names, size_t names_num, uint16_t max, uint16_t *val) {
+parse16(char *str, struct names16 *names, size_t names_num, uint16_t max, uint16_t *val)
+{
     size_t i;
 
     for (i=0; i<names_num; i++) {
@@ -2778,8 +2811,8 @@ parse16(char *str, struct names16 *names, size_t names_num, uint16_t max, uint16
 }
 
 static int
-parse16m(char *str, struct names16 *names, size_t names_num, uint16_t max, uint16_t *val, uint16_t *mask){
-
+parse16m(char *str, struct names16 *names, size_t names_num, uint16_t max, uint16_t *val, uint16_t *mask)
+{
     size_t i;
     char *token, *saveptr = NULL;
 
@@ -2806,7 +2839,8 @@ parse16m(char *str, struct names16 *names, size_t names_num, uint16_t max, uint1
 }
 
 static int
-parse32(char *str, struct names32 *names, size_t names_num, uint32_t max, uint32_t *val) {
+parse32(char *str, struct names32 *names, size_t names_num, uint32_t max, uint32_t *val)
+{
     size_t i;
 
     for (i=0; i<names_num; i++) {
@@ -2823,8 +2857,8 @@ parse32(char *str, struct names32 *names, size_t names_num, uint32_t max, uint32
 }
 
 static int
-parse32m(char *str, struct names32 *names, size_t names_num, uint32_t max, uint32_t *val, uint32_t **mask){
-
+parse32m(char *str, struct names32 *names, size_t names_num, uint32_t max, uint32_t *val, uint32_t **mask)
+{
     size_t i;
     char *saveptr = NULL;
 
@@ -2897,7 +2931,8 @@ struct oxm_str_mapping oxm_str_map[] =
   };
 
 static void
-parse_feature_prop_match(char *str, struct ofl_table_feature_prop_oxm **prop_addr) {
+parse_feature_prop_match(char *str, struct ofl_table_feature_prop_oxm **prop_addr)
+{
     char *token, *saveptr = NULL;
     const int oxm_max = sizeof(oxm_str_map) / sizeof(oxm_str_map[0]);
     uint32_t *oxm_array = (uint32_t *) xmalloc(sizeof(uint32_t) * 80);
@@ -2930,7 +2965,8 @@ parse_feature_prop_match(char *str, struct ofl_table_feature_prop_oxm **prop_add
 }
 
 static void
-set_table_features_match(struct vconn *vconn, int argc, char *argv[]) {
+set_table_features_match(struct vconn *vconn, int argc, char *argv[])
+{
     struct ofl_msg_multipart_request_table_features req_init =
         {{{.type = OFPT_MULTIPART_REQUEST},
               .type = OFPMP_TABLE_FEATURES, .flags = 0x0000},

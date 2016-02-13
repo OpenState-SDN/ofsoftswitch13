@@ -158,6 +158,7 @@ in_band_local_packet_cb(struct relay *r, void *in_band_)
     /*TODO: OFP 1.2 change */
     in_port = 0;
     //in_port = ntohs(opi->in_port);
+
     get_ofp_packet_payload(opi, &payload);
     flow_extract(&payload, in_port, &flow);
 
@@ -270,7 +271,7 @@ in_band_status_cb(struct status_reply *sr, void *in_band_)
 void
 get_ofp_packet_payload(struct ofp_packet_in *opi, struct ofpbuf *payload)
 {
-    // FIXME + TODO
+    // TODO
     //payload->data = opi->data;
     //payload->size = ntohs(opi->header.length) - offsetof(struct ofp_packet_in,
     //                                                   data);

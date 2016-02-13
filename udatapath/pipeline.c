@@ -153,7 +153,7 @@ pipeline_process_packet(struct pipeline *pl, struct packet *pkt) {
         pkt->table_id = next_table->stats->table_id;
         table         = next_table;
         next_table    = NULL;
-
+		
 		
         //removes eventual old 'state' virtual header field
         
@@ -167,18 +167,18 @@ pipeline_process_packet(struct pipeline *pl, struct packet *pkt) {
             state_entry = state_table_lookup(table->state_table, pkt);
             if(state_entry!=NULL){
 
-		        ofl_structs_match_exp_put32(&pkt->handle_std->match, OXM_EXP_STATE, 0xBEBABEBA, 0x00000000);
+        		ofl_structs_match_exp_put32(&pkt->handle_std->match, OXM_EXP_STATE, 0xBEBABEBA, 0x00000000);
                 state_table_write_state(state_entry, pkt);
             }
 		}
-
+        
         //set 'flags' virtual header field value
 
 
-        HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv,
-            hmap_node, hash_int(OXM_EXP_FLAGS,0), &pkt->handle_std->match.match_fields){
+        HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv, 
+            hmap_node, hash_int(OXM_EXP_GLOBAL_STATE,0), &pkt->handle_std->match.match_fields){
                     uint32_t *flags = (uint32_t*) (f->value + EXP_ID_LEN);
-                    *flags = (*flags & 0x00000000 ) | (pkt->dp->global_states);
+                    *flags = (*flags & 0x00000000 ) | (pkt->dp->global_state);
         }
 
 		if (VLOG_IS_DBG_ENABLED(LOG_MODULE)) {
@@ -195,7 +195,7 @@ pipeline_process_packet(struct pipeline *pl, struct packet *pkt) {
                 char *m = ofl_structs_flow_stats_to_string(entry->stats, pkt->dp->exp);
                 VLOG_DBG_RL(LOG_MODULE, &rl, "found matching entry: %s.", m);
                 free(m);
-            }
+            } 
 
             pkt->handle_std->table_miss = is_table_miss(entry);
             execute_entry(pl, entry, &next_table, &pkt);

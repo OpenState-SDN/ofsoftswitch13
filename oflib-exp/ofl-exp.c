@@ -1,4 +1,4 @@
-/* sCopyright (c) 2011, TrafficLab, Ericsson Research, Hungary
+/* Copyright (c) 2011, TrafficLab, Ericsson Research, Hungary
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -147,7 +147,7 @@ ofl_exp_msg_to_string(struct ofl_msg_experimenter const *msg)
 int
 ofl_exp_act_pack(struct ofl_action_header const *src, struct ofp_action_header *dst)
 {
-    struct ofl_action_experimenter *exp = (struct ofl_action_experimenter *) src;
+    struct ofl_action_experimenter const *exp = (struct ofl_action_experimenter const *) src;
 
     switch (exp->experimenter_id) {
         case (OPENSTATE_VENDOR_ID): {
@@ -204,7 +204,7 @@ ofl_exp_act_free(struct ofl_action_header *act)
 size_t
 ofl_exp_act_ofp_len(struct ofl_action_header const *act)
 {
-    struct ofl_action_experimenter *exp = (struct ofl_action_experimenter *) act;
+    struct ofl_action_experimenter const *exp = (struct ofl_action_experimenter const *) act;
 
     switch (exp->experimenter_id) {
         case (OPENSTATE_VENDOR_ID): {
@@ -221,7 +221,7 @@ ofl_exp_act_ofp_len(struct ofl_action_header const *act)
 char *
 ofl_exp_act_to_string(struct ofl_action_header const *act)
 {
-    struct ofl_action_experimenter* exp = (struct ofl_action_experimenter *) act;
+    struct ofl_action_experimenter const * exp = (struct ofl_action_experimenter const *) act;
 
     switch (exp->experimenter_id) {
         case (OPENSTATE_VENDOR_ID): {
@@ -255,7 +255,7 @@ ofl_exp_stats_req_pack (struct ofl_msg_multipart_request_header const *msg, uint
 int
 ofl_exp_stats_reply_pack (struct ofl_msg_multipart_reply_header const *msg, uint8_t **buf, size_t *buf_len, struct ofl_exp const *exp)
 {
-    struct ofl_msg_multipart_reply_experimenter *ext = (struct ofl_msg_multipart_reply_experimenter *) msg;
+    struct ofl_msg_multipart_reply_experimenter const *ext = (struct ofl_msg_multipart_reply_experimenter const *) msg;
 
     switch (ext->experimenter_id) {
 
@@ -317,7 +317,7 @@ ofl_exp_stats_reply_unpack (struct ofp_multipart_reply const *os, uint8_t const 
 char *
 ofl_exp_stats_req_to_string (struct ofl_msg_multipart_request_header const *msg, struct ofl_exp const *exp)
 {
-    struct ofl_msg_multipart_request_experimenter *ext = (struct ofl_msg_multipart_request_experimenter *) msg;
+    struct ofl_msg_multipart_request_experimenter const *ext = (struct ofl_msg_multipart_request_experimenter const *) msg;
     char *str;
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
@@ -392,7 +392,7 @@ ofl_exp_stats_reply_free (struct ofl_msg_multipart_reply_header *msg)
 void
 ofl_exp_field_pack (struct ofpbuf *buf, struct ofl_match_tlv const *oft)
 {
-    /*pollins: probabilmente ci sarà da definire una struttura che determina la posizione dell'experimenter ID (come è fatto adesso presuppone che sia il primo valore in value)*/
+    /*TODO pollins: probably we have to define a structure that points to the experimenter_ID position (Now the experimenter ID is the first value in "value")*/
     switch(*((uint32_t*) (oft->value)))
     {
         case OPENSTATE_VENDOR_ID:{
@@ -480,5 +480,49 @@ ofl_exp_field_overlap_b (struct ofl_match_tlv *f_b, int *field_len, uint8_t **va
             break;
         default:
             break;
+    }
+}
+
+int
+ofl_exp_err_pack(struct ofl_msg_exp_error const *msg, uint8_t **buf, size_t *buf_len){
+    switch (msg->experimenter){
+        case OPENSTATE_VENDOR_ID:{
+            ofl_exp_openstate_error_pack(msg,buf,buf_len);
+            break;}
+        default:{
+            OFL_LOG_WARN(LOG_MODULE, "Trying to pack unknown ERROR EXPERIMENTER message (%u).", msg->experimenter);
+            return -1;}
+    }
+    return 0;
+}
+
+int
+ofl_exp_err_free(struct ofl_msg_exp_error *msg){
+    switch (msg->experimenter){
+        case OPENSTATE_VENDOR_ID:{
+            ofl_exp_openstate_error_free(msg);
+            break;}
+        default:{
+            OFL_LOG_WARN(LOG_MODULE, "Trying to free unknown ERROR EXPERIMENTER message (%u).", msg->experimenter);
+            return -1;}
+    }
+    return 0;
+}
+
+char *
+ofl_exp_err_to_string(struct ofl_msg_exp_error const *msg){
+    switch (msg->experimenter){
+        case OPENSTATE_VENDOR_ID:{
+            return ofl_exp_openstate_error_to_string(msg);
+        }
+        default:{
+            char *str;
+            size_t str_size;
+            FILE *stream = open_memstream(&str, &str_size);
+            OFL_LOG_WARN(LOG_MODULE, "Trying to convert to string unknown ERROR EXPERIMENTER message (%u).", msg->experimenter);
+            fprintf(stream, " exp{id=\"0x%"PRIx32"\"}", msg->experimenter);
+            fclose(stream);
+            return str;
+        }
     }
 }

@@ -49,6 +49,7 @@ ofl_err
 ofl_structs_instructions_unpack(struct ofp_instruction const *src, size_t *len, struct ofl_instruction_header **dst, struct ofl_exp const *exp)
 {
     size_t ilen;
+    ofl_err error = 0;
     struct ofl_instruction_header *inst = NULL;
 
     if (*len < sizeof(struct ofp_instruction)) {
@@ -67,9 +68,13 @@ ofl_structs_instructions_unpack(struct ofp_instruction const *src, size_t *len, 
             struct ofp_instruction_goto_table *si;
             struct ofl_instruction_goto_table *di;
 
+            di = (struct ofl_instruction_goto_table *)malloc(sizeof(struct ofl_instruction_goto_table));
+            inst = (struct ofl_instruction_header *)di;
+
             if (ilen < sizeof(struct ofp_instruction_goto_table)) {
                 OFL_LOG_WARN(LOG_MODULE, "Received GOTO_TABLE instruction has invalid length (%zu).", *len);
-                return ofl_error(OFPET_BAD_ACTION, OFPBRC_BAD_LEN);
+                error = ofl_error(OFPET_BAD_ACTION, OFPBRC_BAD_LEN);
+                break;
             }
 
             si = (struct ofp_instruction_goto_table *)src;
@@ -80,14 +85,12 @@ ofl_structs_instructions_unpack(struct ofp_instruction const *src, size_t *len, 
                     OFL_LOG_WARN(LOG_MODULE, "Received GOTO_TABLE instruction has invalid table_id (%s).", ts);
                     free(ts);
                 }
-                return ofl_error(OFPET_BAD_INSTRUCTION, OFPBIC_BAD_TABLE_ID);
+                error = ofl_error(OFPET_BAD_INSTRUCTION, OFPBIC_BAD_TABLE_ID);
+                break;
             }
-
-            di = (struct ofl_instruction_goto_table *)malloc(sizeof(struct ofl_instruction_goto_table));
 
             di->table_id = si->table_id;
 
-            inst = (struct ofl_instruction_header *)di;
             ilen -= sizeof(struct ofp_instruction_goto_table);
             break;
         }
@@ -96,18 +99,20 @@ ofl_structs_instructions_unpack(struct ofp_instruction const *src, size_t *len, 
             struct ofp_instruction_write_metadata *si;
             struct ofl_instruction_write_metadata *di;
 
+            di = (struct ofl_instruction_write_metadata *)malloc(sizeof(struct ofl_instruction_write_metadata));
+            inst = (struct ofl_instruction_header *)di;
+
             if (ilen < sizeof(struct ofp_instruction_write_metadata)) {
                 OFL_LOG_WARN(LOG_MODULE, "Received WRITE_METADATA instruction has invalid length (%zu).", *len);
-                return ofl_error(OFPET_BAD_ACTION, OFPBRC_BAD_LEN);
+                error = ofl_error(OFPET_BAD_ACTION, OFPBRC_BAD_LEN);
+                break;
             }
 
             si = (struct ofp_instruction_write_metadata *)src;
-            di = (struct ofl_instruction_write_metadata *)malloc(sizeof(struct ofl_instruction_write_metadata));
 
             di->metadata =      ntoh64(si->metadata);
             di->metadata_mask = ntoh64(si->metadata_mask);
 
-            inst = (struct ofl_instruction_header *)di;
             ilen -= sizeof(struct ofp_instruction_write_metadata);
             break;
         }
@@ -116,22 +121,23 @@ ofl_structs_instructions_unpack(struct ofp_instruction const *src, size_t *len, 
             struct ofp_instruction_actions *si;
             struct ofl_instruction_actions *di;
             struct ofp_action_header *act;
-            ofl_err error;
             size_t i;
+
+            di = (struct ofl_instruction_actions *)malloc(sizeof(struct ofl_instruction_actions));
+            inst = (struct ofl_instruction_header *)di;
 
             if (ilen < sizeof(struct ofp_instruction_actions)) {
                 OFL_LOG_WARN(LOG_MODULE, "Received *_ACTIONS instruction has invalid length (%zu).", *len);
-                return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
+                error = ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
+                break;
             }
             ilen -= sizeof(struct ofp_instruction_actions);
 
             si = (struct ofp_instruction_actions *)src;
-            di = (struct ofl_instruction_actions *)malloc(sizeof(struct ofl_instruction_actions));
 
             error = ofl_utils_count_ofp_actions((uint8_t *)si->actions, ilen, &di->actions_num);
             if (error) {
-                free(di);
-                return error;
+                break;
             }
             di->actions = (struct ofl_action_header **)malloc(di->actions_num * sizeof(struct ofl_action_header *));
 
@@ -139,26 +145,21 @@ ofl_structs_instructions_unpack(struct ofp_instruction const *src, size_t *len, 
             for (i = 0; i < di->actions_num; i++) {
                 error = ofl_actions_unpack(act, &ilen, &(di->actions[i]), exp);
                 if (error) {
-                    *len = *len - ntohs(src->len) + ilen;
-                    OFL_UTILS_FREE_ARR_FUN2(di->actions, i,
-                                            ofl_actions_free, exp);
-                    free(di);
-                    return error;
+                    break;
                 }
                 act = (struct ofp_action_header *)((uint8_t *)act + ntohs(act->len));
             }
 
-            inst = (struct ofl_instruction_header *)di;
             break;
         }
         case OFPIT_CLEAR_ACTIONS: {
+            inst = (struct ofl_instruction_header *)malloc(sizeof(struct ofl_instruction_header));
+
             if (ilen < sizeof(struct ofp_instruction_actions)) {
                 OFL_LOG_WARN(LOG_MODULE, "Received CLEAR_ACTIONS instruction has invalid length (%zu).", *len);
-                return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
+                error = ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
+                break;
             }
-
-            inst = (struct ofl_instruction_header *)malloc(sizeof(struct ofl_instruction_header));
-            inst->type = (enum ofp_instruction_type)ntohs(src->type);
 
             ilen -= sizeof(struct ofp_instruction_actions);
             break;
@@ -167,51 +168,51 @@ ofl_structs_instructions_unpack(struct ofp_instruction const *src, size_t *len, 
             struct ofp_instruction_meter *si;
             struct ofl_instruction_meter *di;
 
+            di = (struct ofl_instruction_meter *)malloc(sizeof(struct ofl_instruction_meter));
+            inst = (struct ofl_instruction_header *)di;
+
             if (ilen < sizeof(struct ofp_instruction_meter)) {
                 OFL_LOG_WARN(LOG_MODULE, "Received METER instruction has invalid length (%zu).", *len);
-                return ofl_error(OFPET_BAD_ACTION, OFPBRC_BAD_LEN);
+                error = ofl_error(OFPET_BAD_ACTION, OFPBRC_BAD_LEN);
+                break;
             }
-            si = (struct ofp_instruction_meter*)src;
-            di = (struct ofl_instruction_meter *)malloc(sizeof(struct ofl_instruction_meter));
 
+            si = (struct ofp_instruction_meter*)src;
             di->meter_id = ntohl(si->meter_id);
 
-            inst = (struct ofl_instruction_header *)di;
             ilen -= sizeof(struct ofp_instruction_meter);
             break;
         }
         case OFPIT_EXPERIMENTER: {
-            ofl_err error;
 
             if (exp == NULL || exp->inst == NULL || exp->inst->unpack == NULL) {
                 OFL_LOG_WARN(LOG_MODULE, "Received EXPERIMENTER instruction, but no callback was given.");
-                return ofl_error(OFPET_BAD_INSTRUCTION, OFPBIC_UNSUP_INST);
+                error = ofl_error(OFPET_BAD_INSTRUCTION, OFPBIC_UNSUP_INST);
+                break;
             }
             error = exp->inst->unpack(src, &ilen, &inst);
-            if (error) {
-                return error;
-            }
             break;
         }
         default:
             OFL_LOG_WARN(LOG_MODULE, "The received instruction type (%u) is invalid.", ntohs(src->type));
-            return ofl_error(OFPET_BAD_INSTRUCTION, OFPBIC_UNKNOWN_INST);
+            error = ofl_error(OFPET_BAD_INSTRUCTION, OFPBIC_UNKNOWN_INST);
+            break;
     }
 
     // must set type before check, so free works correctly
     inst->type = (enum ofp_instruction_type)ntohs(src->type);
+    (*dst) = inst;
 
-    if (ilen != 0) {
+    if (!error &&  (ilen != 0)) {
         *len = *len - ntohs(src->len) + ilen;
         OFL_LOG_WARN(LOG_MODULE, "The received instruction contained extra bytes (%zu).", ilen);
         ofl_structs_free_instruction(inst, exp);
-        return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
+        error = ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
     }
 
     *len -= ntohs(src->len);
-    (*dst) = inst;
 
-    return 0;
+    return error;
 }
 
 static ofl_err
@@ -233,7 +234,7 @@ ofl_structs_table_properties_unpack(struct ofp_table_feature_prop_header const *
     plen = ntohs(src->length);
 
 	switch(ntohs(src->type)){
-	case OFPTFPT_INSTRUCTIONS:
+ 		case OFPTFPT_INSTRUCTIONS:
         case OFPTFPT_INSTRUCTIONS_MISS:{
 			struct ofp_table_feature_prop_instructions *sp = (struct ofp_table_feature_prop_instructions*) src;
 			struct ofl_table_feature_prop_instructions *dp;
@@ -754,7 +755,7 @@ ofl_structs_meter_config_unpack(struct ofp_meter_config const *src, size_t *len,
     }
     s->bands = (struct ofl_meter_band_header **)malloc(s->meter_bands_num * sizeof(struct ofl_meter_band_header *));
 
-    b = src->bands;
+    b= src->bands;
     for (i = 0; i < s->meter_bands_num; i++) {
         error = ofl_structs_meter_band_unpack(b, &slen, &(s->bands[i]));
         if (error) {

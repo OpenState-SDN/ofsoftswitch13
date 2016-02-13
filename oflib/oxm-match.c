@@ -554,14 +554,11 @@ parse_oxm_entry(struct ofl_match *match, const struct oxm_field *f, const void *
             ofl_structs_match_put16m(match, f->header, ntohs(*((uint16_t const*) value)),ntohs(*((uint16_t const*) mask)));
             return 0;
 
-	case OFI_OXM_EXP_STATE:
-        case OFI_OXM_EXP_STATE_W:
-        case OFI_OXM_EXP_FLAGS:
-	case OFI_OXM_EXP_FLAGS_W: {
-		/* TODO */
-		return -1;
-	}
+	case OFI_OXM_EXP_STATE_W:
+	case OFI_OXM_EXP_GLOBAL_STATE:
+	case OFI_OXM_EXP_GLOBAL_STATE_W:
 
+	case OFI_OXM_EXP_STATE:
         case NUM_OXM_FIELDS:
             NOT_REACHED();
     }
@@ -636,6 +633,7 @@ oxm_pull_match(struct ofpbuf *buf, struct ofl_match * match_dst, int match_len, 
                         if (exp == NULL || exp->field == NULL || exp->field->unpack == NULL) {
                             VLOG_DBG_RL(LOG_MODULE, &rl,"Received match is experimental, but no callback was given.");
                             error = ofl_error(OFPET_BAD_MATCH, OFPBMC_BAD_TYPE);
+                            break;
                         }
                         /* FIXME */
                         error = exp->field->unpack(match_dst, f, p + 4, p + 4 + EXP_ID_LEN, p + 4 + EXP_ID_LEN + (length-EXP_ID_LEN) / 2);

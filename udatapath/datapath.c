@@ -56,6 +56,7 @@
 #include "oflib/ofl-log.h"
 #include "oflib-exp/ofl-exp.h"
 #include "oflib-exp/ofl-exp-nicira.h"
+#include "oflib-exp/ofl-exp-openstate.h"
 #include "oflib/ofl-messages.h"
 #include "oflib/ofl-log.h"
 #include "openflow/openflow.h"
@@ -125,6 +126,11 @@ static struct ofl_exp_field dp_exp_field =
          .overlap_a  = ofl_exp_field_overlap_a,
          .overlap_b  = ofl_exp_field_overlap_b};
 
+/* Callbacks for processing experimenter errors in OFLib. */
+static struct ofl_exp_err dp_exp_err =
+        {.pack      = ofl_exp_err_pack,
+         .free      = ofl_exp_err_free,
+         .to_string = ofl_exp_err_to_string};
 
 static struct ofl_exp dp_exp =
         {.act   = &dp_exp_act,
@@ -132,7 +138,8 @@ static struct ofl_exp dp_exp =
          .match = NULL,
          .stats = &dp_exp_statistics,
          .msg   = &dp_exp_msg,
-         .field = &dp_exp_field};
+         .field = &dp_exp_field,
+         .err   = &dp_exp_err};
 
 /* Generates and returns a random datapath id. */
 static uint64_t
@@ -144,7 +151,8 @@ gen_datapath_id(void) {
 
 
 struct datapath *
-dp_new(void) {
+dp_new(void)
+{
     struct datapath *dp;
     dp = xmalloc(sizeof(struct datapath));
 
@@ -163,7 +171,7 @@ dp_new(void) {
     dp->id = gen_datapath_id();
 
     // FIXME global_states is not a pointer (NULL)?
-    dp->global_states = 0;
+    dp->global_state = 0;
 
     dp->generation_id = -1;
 
@@ -194,8 +202,8 @@ dp_new(void) {
     if(strlen(dp->dp_desc) == 0) {
         /* just use "$HOSTNAME pid=$$" */
         char hostnametmp[DESC_STR_LEN];
-	    gethostname(hostnametmp,sizeof hostnametmp);
-        snprintf(dp->dp_desc, sizeof dp->dp_desc,"%s pid=%u",hostnametmp, getpid());
+	    gethostname(hostnametmp, sizeof(hostnametmp));
+        snprintf(dp->dp_desc, DESC_STR_LEN,"%s pid=%u",hostnametmp, getpid());
     }
 
     /* FIXME: Should not depend on udatapath_as_lib */
@@ -304,21 +312,30 @@ remote_rconn_run(struct datapath *dp, struct remote *r, uint8_t conn_id) {
             if (buffer == NULL) {
                 break;
             } else {
-                struct ofl_msg_header *msg;
-
+                struct ofl_msg_header *msg = NULL;
                 struct sender sender = {.remote = r, .conn_id = conn_id};
 
                 error = ofl_msg_unpack(buffer->data, buffer->size, &msg, &(sender.xid), dp->exp);
 
                 if (!error) {
                     error = handle_control_msg(dp, msg, &sender);
-
-                    if (error) {
-                        ofl_msg_free(msg, dp->exp);
-                    }
                 }
 
-                if (error) {
+                    if (error) {
+                   /* [*] The highest bit of 'error' is always set to one, but on-the-wire we
+                   need full compliance to OF specification: the 'type' of an experimenter
+                   error message must be 0xffff instead of 0x7ffff. */
+                   if ((ofl_error_type(error) | 0x8000) == OFPET_EXPERIMENTER){
+                       struct ofl_msg_exp_error err =
+                               {{.type = OFPT_ERROR},
+                                .type = ofl_error_type(error) | 0x8000, // [*]
+                                .exp_type = ofl_error_code(error),
+                                .experimenter = get_experimenter_id(msg),
+                                .data_length = buffer->size,
+                                .data        = buffer->data};
+                       dp_send_message(dp, (struct ofl_msg_header *)&err, &sender);
+                    }
+                   else{
                     struct ofl_msg_error err =
                             {{.type = OFPT_ERROR},
                              .type = ofl_error_type(error),
@@ -326,6 +343,10 @@ remote_rconn_run(struct datapath *dp, struct remote *r, uint8_t conn_id) {
                              .data_length = buffer->size,
                              .data        = buffer->data};
                     dp_send_message(dp, (struct ofl_msg_header *)&err, &sender);
+                }
+                   if (msg != NULL){
+                        ofl_msg_free(msg, dp->exp);
+                   }
                 }
 
                 ofpbuf_delete(buffer);
@@ -617,16 +638,17 @@ dp_send_message(struct datapath *dp, struct ofl_msg_header *msg,
 
 ofl_err
 dp_handle_set_desc(struct datapath *dp, struct ofl_exp_openflow_msg_set_dp_desc *msg,
-                                            const struct sender *sender UNUSED) {
+                                            const struct sender *sender UNUSED)
+{
     dp_set_dp_desc(dp, msg->dp_desc);
     ofl_msg_free((struct ofl_msg_header *)msg, dp->exp);
     return 0;
 }
 
 static ofl_err
-dp_check_generation_id(struct datapath *dp, uint64_t new_gen_id){
-
-    if(dp->generation_id >= 0  && ((int64_t)(new_gen_id - dp->generation_id) < 0) ){
+dp_check_generation_id(struct datapath *dp, uint64_t new_gen_id)
+{
+    if(new_gen_id < dp->generation_id) {
         return ofl_error(OFPET_ROLE_REQUEST_FAILED, OFPRRFC_STALE);
     }
     else dp->generation_id = new_gen_id;
@@ -636,7 +658,8 @@ dp_check_generation_id(struct datapath *dp, uint64_t new_gen_id){
 
 ofl_err
 dp_handle_role_request(struct datapath *dp, struct ofl_msg_role_request *msg,
-                                            const struct sender *sender) {
+                                            const struct sender *sender)
+{
     uint32_t role = msg->role;
     uint64_t generation_id = msg->generation_id;
     switch (msg->role) {

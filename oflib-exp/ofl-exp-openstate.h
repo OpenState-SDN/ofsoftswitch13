@@ -73,8 +73,8 @@ struct ofl_exp_del_flow_state {
 };
 
 struct ofl_exp_set_global_state {
-    uint32_t flag;
-    uint32_t flag_mask;
+    uint32_t global_state;
+    uint32_t global_state_mask;
 };
 
 /*************************
@@ -119,12 +119,12 @@ struct ofl_exp_msg_multipart_reply_state {
 };
 
 struct ofl_exp_msg_multipart_request_global_state {
-    struct ofl_exp_openstate_msg_multipart_request   header; /* OFPMP_FLAGS */
+    struct ofl_exp_openstate_msg_multipart_request   header; /* OFPMP_GLOBAL_STATE */
 };
 
 struct ofl_exp_msg_multipart_reply_global_state {
-    struct ofl_exp_openstate_msg_multipart_reply   header; /* OFPMP_FLAGS */
-    uint32_t global_states;
+    struct ofl_exp_openstate_msg_multipart_reply   header; /* OFPMP_GLOBAL_STATE */
+    uint32_t global_state;
 };
 
 /*************************************************************************/
@@ -149,11 +149,11 @@ struct ofl_exp_action_set_state {
 
 };
 
-struct ofl_exp_action_set_flag {
-    struct ofl_exp_openstate_act_header   header; /* OFPAT_EXP_SET_FLAG */
+struct ofl_exp_action_set_global_state {
+    struct ofl_exp_openstate_act_header   header; /* OFPAT_EXP_SET_GLOBAL_STATE */
 
-    uint32_t flag;
-    uint32_t flag_mask;
+    uint32_t global_state;
+    uint32_t global_state_mask;
 };
 
 
@@ -207,13 +207,13 @@ state_table_lookup(struct state_table*, struct packet *);
 void
 state_table_write_state(struct state_entry *, struct packet *);
 
-void
+ofl_err
 state_table_set_state(struct state_table *, struct packet *, struct ofl_exp_set_flow_state *msg, struct ofl_exp_action_set_state *act);
 
-void
+ofl_err
 state_table_set_extractor(struct state_table *, struct key_extractor *, int);
 
-void
+ofl_err
 state_table_del_state(struct state_table *, uint8_t *, uint32_t);
 
 void
@@ -265,10 +265,10 @@ int
 ofl_exp_openstate_stats_reply_pack(struct ofl_msg_multipart_reply_experimenter const *ext, uint8_t **buf, size_t *buf_len, struct ofl_exp const *exp);
 
 char *
-ofl_exp_openstate_stats_request_to_string(struct ofl_msg_multipart_request_experimenter *ext, struct ofl_exp const *exp);
+ofl_exp_openstate_stats_request_to_string(struct ofl_msg_multipart_request_experimenter const *ext, struct ofl_exp const *exp);
 
 char *
-ofl_exp_openstate_stats_reply_to_string(struct ofl_msg_multipart_reply_experimenter *ext, struct ofl_exp const *exp);
+ofl_exp_openstate_stats_reply_to_string(struct ofl_msg_multipart_reply_experimenter const *ext, struct ofl_exp const *exp);
 
 ofl_err
 ofl_exp_openstate_stats_req_unpack(struct ofp_multipart_request const *os, uint8_t const *buf, size_t *len, struct ofl_msg_multipart_request_header **msg, struct ofl_exp const *exp);
@@ -304,6 +304,15 @@ ofl_exp_openstate_field_overlap_a (struct ofl_match_tlv *f_a, int *field_len, ui
 
 void
 ofl_exp_openstate_field_overlap_b (struct ofl_match_tlv *f_b, int *field_len, uint8_t **val_b, uint8_t **mask_b, uint64_t *all_mask);
+
+void
+ofl_exp_openstate_error_pack (struct ofl_msg_exp_error const *msg, uint8_t **buf, size_t *buf_len);
+
+void
+ofl_exp_openstate_error_free (struct ofl_msg_exp_error *msg);
+
+char *
+ofl_exp_openstate_error_to_string(struct ofl_msg_exp_error const *msg);
 
 /* Handles a state_mod message */
 ofl_err
@@ -371,5 +380,14 @@ ofl_structs_match_exp_put64(struct ofl_match *match, uint32_t header, uint32_t e
 
 void
 ofl_structs_match_exp_put64m(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint64_t value, uint64_t mask);
+
+uint32_t
+get_experimenter_id(struct ofl_msg_header const *msg);
+
+uint32_t
+get_experimenter_id_from_match(struct ofl_match const *flow_mod_match);
+
+uint32_t
+get_experimenter_id_from_action(struct ofl_instruction_actions const *act);
 
 #endif /* OFL_EXP_OPENSTATE_H */

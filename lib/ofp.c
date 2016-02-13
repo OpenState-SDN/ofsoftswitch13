@@ -183,8 +183,7 @@ update_instruction_length(struct ofpbuf *buffer, size_t oia_offset)
 }
 
 struct ofpbuf *
-make_flow_mod(uint8_t command, uint8_t table_id,
-	      const struct flow * flow, size_t actions_len)
+make_flow_mod(uint8_t command, uint8_t table_id, const struct flow * flow, size_t actions_len)
 {
     struct ofp_flow_mod *ofm;
     size_t size = sizeof *ofm + actions_len;
@@ -195,7 +194,7 @@ make_flow_mod(uint8_t command, uint8_t table_id,
     ofm->header.length = htons(size);
     ofm->cookie = 0;
 
-    /*TODO fill match
+    /* TODO fill match
 
     ofm->match.in_port = flow->in_port;
     memcpy(ofm->match.dl_src, flow->dl_src, sizeof ofm->match.dl_src);
@@ -209,6 +208,7 @@ make_flow_mod(uint8_t command, uint8_t table_id,
     ofm->match.nw_tos = flow->nw_tos;
     ofm->match.tp_src = flow->tp_src;
     ofm->match.tp_dst = flow->tp_dst; */
+
     ofm->command = command;
     ofm->table_id = table_id;
 
