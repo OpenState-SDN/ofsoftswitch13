@@ -106,12 +106,12 @@ struct ofl_exp_msg_multipart_request_state {
                                            (from ofp_table_multipart), 0xff for all
                                            tables. */
     uint8_t                  get_from_state;
-    uint32_t                 state;                    
+    uint32_t                 state;
     struct ofl_match_header  *match;       /* Fields to match. */
 };
 
 struct ofl_exp_msg_multipart_reply_state {
-    
+
     struct ofl_exp_openstate_msg_multipart_reply   header; /* OFPMP_STATE */
 
     size_t                  stats_num;
@@ -158,7 +158,7 @@ struct ofl_exp_action_set_state {
     uint32_t idle_rollback;
     uint32_t hard_timeout;
     uint32_t idle_timeout;
-    
+
 };
 
 struct ofl_exp_action_set_global_state {
@@ -204,28 +204,28 @@ struct state_table {
 };
 
 /*experimenter table functions*/
-struct state_table * 
+struct state_table *
 state_table_create(void);
 
-void 
+void
 state_table_destroy(struct state_table *);
 
-uint8_t 
+uint8_t
 state_table_is_stateful(struct state_table *);
 
-struct state_entry * 
+struct state_entry *
 state_table_lookup(struct state_table*, struct packet *);
 
-void 
+void
 state_table_write_state(struct state_entry *, struct packet *);
 
-ofl_err 
+ofl_err
 state_table_set_state(struct state_table *, struct packet *, struct ofl_exp_set_flow_state *msg, struct ofl_exp_action_set_state *act);
 
-ofl_err 
+ofl_err
 state_table_set_extractor(struct state_table *, struct key_extractor *, int);
 
-ofl_err 
+ofl_err
 state_table_del_state(struct state_table *, uint8_t *, uint32_t);
 
 void
@@ -254,7 +254,7 @@ OFl_exp_openstate_msg_to_string(struct ofl_msg_experimenter const *msg);
 /*experimenter action functions*/
 
 
-int 
+int
 ofl_exp_openstate_act_pack(struct ofl_action_header const *src, struct ofp_action_header *dst);
 
 ofl_err
@@ -263,7 +263,7 @@ ofl_exp_openstate_act_unpack(struct ofp_action_header const *src, size_t *len, s
 size_t
 ofl_exp_openstate_act_ofp_len(struct ofl_action_header const *act);
 
-int     
+int
 ofl_exp_openstate_act_free(struct ofl_action_header *act);
 
 char *
@@ -299,7 +299,7 @@ ofl_exp_openstate_stats_reply_free(struct ofl_msg_multipart_reply_header *msg);
 int
 ofl_exp_openstate_field_unpack(struct ofl_match *match, struct oxm_field const *f, void const *experimenter_id, void const *value, void const *mask);
 
-void  
+void
 ofl_exp_openstate_field_pack(struct ofpbuf *buf, struct ofl_match_tlv const *oft);
 
 void
@@ -333,6 +333,9 @@ handle_state_mod(struct pipeline *pl, struct ofl_exp_msg_state_mod *msg, const s
 /* Handles a state stats request. */
 ofl_err
 handle_stats_request_state(struct pipeline *pl, struct ofl_exp_msg_multipart_request_state *msg, const struct sender *sender, struct ofl_exp_msg_multipart_reply_state *reply);
+
+ofl_err
+handle_stats_request_state_num(struct pipeline *pl, struct ofl_exp_msg_multipart_request_state_num *msg, const struct sender *sender, struct ofl_exp_msg_multipart_reply_state_num *reply);
 
 /* Handles a global state stats request. */
 ofl_err

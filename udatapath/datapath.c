@@ -170,7 +170,7 @@ dp_new(void)
 
     dp->id = gen_datapath_id();
 
-    dp->global_state = NULL;
+    dp->global_state = 0;
 
     dp->generation_id = -1;
 
@@ -323,7 +323,7 @@ remote_rconn_run(struct datapath *dp, struct remote *r, uint8_t conn_id) {
                     if (error) {
                    /* [*] The highest bit of 'error' is always set to one, but on-the-wire we
                    need full compliance to OF specification: the 'type' of an experimenter
-                   error message must be 0xffff instead of 0x7ffff. */               
+                   error message must be 0xffff instead of 0x7ffff. */
                    if ((ofl_error_type(error) | 0x8000) == OFPET_EXPERIMENTER){
                        struct ofl_msg_exp_error err =
                                {{.type = OFPT_ERROR},
@@ -660,7 +660,7 @@ dp_handle_role_request(struct datapath *dp, struct ofl_msg_role_request *msg,
                                             const struct sender *sender)
 {
     uint32_t role = msg->role;
-    uint64_t generation_id = msg->generation_id; 
+    uint64_t generation_id = msg->generation_id;
     switch (msg->role) {
         case OFPCR_ROLE_NOCHANGE:{
             role = sender->remote->role;
@@ -701,7 +701,7 @@ dp_handle_role_request(struct datapath *dp, struct ofl_msg_role_request *msg,
             return ofl_error(OFPET_ROLE_REQUEST_FAILED, OFPRRFC_BAD_ROLE);
         }
     }
-    
+
     {
     struct ofl_msg_role_request reply =
         {{.type = OFPT_ROLE_REPLY},

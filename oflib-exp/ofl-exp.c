@@ -144,11 +144,11 @@ ofl_exp_msg_to_string(struct ofl_msg_experimenter const *msg)
     }
 }
 
-int 
+int
 ofl_exp_act_pack(struct ofl_action_header const *src, struct ofp_action_header *dst)
 {
     struct ofl_action_experimenter const *exp = (struct ofl_action_experimenter const *) src;
-    
+
     switch (exp->experimenter_id) {
         case (OPENSTATE_VENDOR_ID): {
             return ofl_exp_openstate_act_pack(src,dst);
@@ -160,7 +160,7 @@ ofl_exp_act_pack(struct ofl_action_header const *src, struct ofp_action_header *
     }
 }
 
-ofl_err 
+ofl_err
 ofl_exp_act_unpack(struct ofp_action_header const *src, size_t *len, struct ofl_action_header **dst)
 {
     struct ofp_action_experimenter_header *exp;
@@ -185,11 +185,11 @@ ofl_exp_act_unpack(struct ofp_action_header const *src, size_t *len, struct ofl_
 }
 
 
-int     
+int
 ofl_exp_act_free(struct ofl_action_header *act)
 {
     struct ofl_action_experimenter *exp = (struct ofl_action_experimenter *) act;
-        
+
     switch (exp->experimenter_id) {
         case (OPENSTATE_VENDOR_ID): {
             return ofl_exp_openstate_act_free(act);
@@ -235,7 +235,7 @@ ofl_exp_act_to_string(struct ofl_action_header const *act)
 }
 
 
-int 
+int
 ofl_exp_stats_req_pack (struct ofl_msg_multipart_request_header const *msg, uint8_t **buf, size_t *buf_len, struct ofl_exp const *exp)
 {
     struct ofl_msg_multipart_request_experimenter *ext = (struct ofl_msg_multipart_request_experimenter *) msg;
@@ -244,7 +244,7 @@ ofl_exp_stats_req_pack (struct ofl_msg_multipart_request_header const *msg, uint
 
         case (OPENSTATE_VENDOR_ID):
             return ofl_exp_openstate_stats_req_pack(ext, buf, buf_len, exp);
-                
+
         default: {
             OFL_LOG_WARN(LOG_MODULE, "Trying to pack unknown multipart EXPERIMENTER message (%u).", ext->experimenter_id);
             return -1;
@@ -252,7 +252,7 @@ ofl_exp_stats_req_pack (struct ofl_msg_multipart_request_header const *msg, uint
     }
 }
 
-int 
+int
 ofl_exp_stats_reply_pack (struct ofl_msg_multipart_reply_header const *msg, uint8_t **buf, size_t *buf_len, struct ofl_exp const *exp)
 {
     struct ofl_msg_multipart_reply_experimenter const *ext = (struct ofl_msg_multipart_reply_experimenter const *) msg;
@@ -262,7 +262,7 @@ ofl_exp_stats_reply_pack (struct ofl_msg_multipart_reply_header const *msg, uint
         case (OPENSTATE_VENDOR_ID): {
             return ofl_exp_openstate_stats_reply_pack(ext, buf, buf_len, exp);
         }
-                
+
         default: {
             OFL_LOG_WARN(LOG_MODULE, "Trying to pack unknown multipart EXPERIMENTER message (%u).", ext->experimenter_id);
             return -1;
@@ -327,13 +327,13 @@ ofl_exp_stats_req_to_string (struct ofl_msg_multipart_request_header const *msg,
         }
         default: {
             OFL_LOG_WARN(LOG_MODULE, "Trying to convert to string unknown EXPERIMENTER message (%u).", ext->experimenter_id);
-            fprintf(stream, "exp{id=\"0x%"PRIx32"\"}", ext->experimenter_id);           
+            fprintf(stream, "exp{id=\"0x%"PRIx32"\"}", ext->experimenter_id);
         }
     }
     fclose(stream);
     return str;
 }
-    
+
 
 char *
 ofl_exp_stats_reply_to_string (struct ofl_msg_multipart_reply_header const *msg, struct ofl_exp const *exp)
@@ -425,7 +425,7 @@ ofl_exp_field_match (struct ofl_match_tlv *f, int *packet_header, int *field_len
             ofl_exp_openstate_field_match(f, packet_header, field_len, flow_val, flow_mask);
             break;
         default:
-            break;             
+            break;
     }
 }
 
