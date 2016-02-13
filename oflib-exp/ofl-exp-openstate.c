@@ -791,8 +791,7 @@ ofl_exp_openstate_stats_reply_unpack(struct ofp_multipart_reply const *os, uint8
             dm->header.header.experimenter_id = ntohl(ext->experimenter);
             dm->count =  ntohl(sm->count);
 
-	    // FIXME
-            *msg = (struct ofl_msg_multipart_request_header *)dm;
+            *msg = (struct ofl_msg_multipart_reply_header *)dm;
             return 0;
         }
         case (OFPMP_EXP_GLOBAL_STATE_STATS):
