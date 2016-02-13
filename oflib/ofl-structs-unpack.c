@@ -798,6 +798,7 @@ ofl_structs_queue_prop_unpack(struct ofp_queue_prop_header const *src, size_t *l
 
             if (*len < sizeof(struct ofp_queue_prop_min_rate)) {
                 OFL_LOG_WARN(LOG_MODULE, "Received MIN_RATE queue property has invalid length (%zu).", *len);
+                free (dp);
                 return ofl_error(OFPET_BAD_ACTION, OFPBRC_BAD_LEN);
             }
             *len -= sizeof(struct ofp_queue_prop_min_rate);
@@ -813,6 +814,7 @@ ofl_structs_queue_prop_unpack(struct ofp_queue_prop_header const *src, size_t *l
             
             if (*len < sizeof(struct ofp_queue_prop_max_rate)) {
                 OFL_LOG_WARN(LOG_MODULE, "Received MAX_RATE queue property has invalid length (%zu).", *len);
+                free (dp);
                 return ofl_error(OFPET_BAD_ACTION, OFPBRC_BAD_LEN);
             }
             *len -= sizeof(struct ofp_queue_prop_max_rate);   
@@ -828,6 +830,7 @@ ofl_structs_queue_prop_unpack(struct ofp_queue_prop_header const *src, size_t *l
             
             if (*len < sizeof(struct ofp_queue_prop_experimenter)) {
                 OFL_LOG_WARN(LOG_MODULE, "Received EXPERIMENTER queue property has invalid length (%zu).", *len);
+                free (dp);
                 return ofl_error(OFPET_BAD_ACTION, OFPBRC_BAD_LEN);
             }
             *len -= sizeof(struct ofp_queue_prop_experimenter);   

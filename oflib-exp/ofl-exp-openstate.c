@@ -676,6 +676,7 @@ ofl_exp_openstate_stats_req_unpack(struct ofp_multipart_request const *os, uint8
 
             if (sm->table_id != OFPTT_ALL && sm->table_id >= PIPELINE_TABLES) {
                  OFL_LOG_WARN(LOG_MODULE, "Received MULTIPART REQUEST STATE message has invalid table id (%d).", sm->table_id );
+                 free (dm);
                  return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_TABLE_ID);
             }
             dm->header.type = ntohl(ext->exp_type);
@@ -704,6 +705,7 @@ ofl_exp_openstate_stats_req_unpack(struct ofp_multipart_request const *os, uint8
             //TODO: up to now we allow just single table statistics ()
             if (sm->table_id == OFPTT_ALL || sm->table_id >= PIPELINE_TABLES) {
                  OFL_LOG_WARN(LOG_MODULE, "Received MULTIPART REQUEST STATE message has invalid table id (%d).", sm->table_id );
+                 free (dm);
                  return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_TABLE_ID);
             }
 

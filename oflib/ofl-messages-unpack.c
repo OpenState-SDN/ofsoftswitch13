@@ -484,6 +484,7 @@ ofl_msg_unpack_flow_mod(struct ofp_header const *src, uint8_t const* buf, size_t
     if (sm->table_id >= PIPELINE_TABLES && ((sm->command != OFPFC_DELETE
     || sm->command != OFPFC_DELETE_STRICT) && sm->table_id != OFPTT_ALL)) {
         OFL_LOG_WARN(LOG_MODULE, "Received FLOW_MOD message has invalid table id (%d).", sm->table_id );
+        free(dm);
         return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_TABLE_ID);
     } 
 
@@ -714,6 +715,7 @@ ofl_msg_unpack_table_mod(struct ofp_header const *src, size_t *len, struct ofl_m
     dm = (struct ofl_msg_table_mod *)malloc(sizeof(struct ofl_msg_table_mod));
     if (sm->table_id >= PIPELINE_TABLES) {
         OFL_LOG_WARN(LOG_MODULE, "Received TABLE_MOD message has invalid table id (%d).", sm->table_id );
+        free(dm);
         return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_TABLE_ID);
     }
 
@@ -745,6 +747,7 @@ ofl_msg_unpack_multipart_request_flow(struct ofp_multipart_request const *os, ui
 
     if (sm->table_id != OFPTT_ALL && sm->table_id >= PIPELINE_TABLES) {
          OFL_LOG_WARN(LOG_MODULE, "Received MULTIPART REQUEST FLOW message has invalid table id (%d).", sm->table_id );
+         free(dm);
          return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_TABLE_ID);
     }
 
