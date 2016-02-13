@@ -554,8 +554,6 @@ ofl_exp_openstate_stats_req_pack(struct ofl_msg_multipart_request_experimenter c
         }
         case (OFPMP_EXP_GLOBAL_STATE_STATS):
         {
-            // FIXME
-            // struct ofl_exp_msg_multipart_request_global_state *msg = (struct ofl_exp_msg_multipart_request_global_state *)e;
             struct ofp_multipart_request *req;
             struct ofp_exp_global_state_stats_request *stats;
             struct ofp_experimenter_stats_header *exp_header;
@@ -770,11 +768,9 @@ ofl_exp_openstate_stats_reply_unpack(struct ofp_multipart_reply const *os, uint8
                     return error;
                 }
 
-		// FIXME
                 stat = (struct ofp_exp_state_stats *)((uint8_t *)stat + ntohs(stat->length));
             }
 
-	    // FIXME
             *msg = (struct ofl_msg_multipart_reply_header *)dm;
             return 0;
         }
@@ -816,7 +812,6 @@ ofl_exp_openstate_stats_reply_unpack(struct ofp_multipart_reply const *os, uint8
             dm->header.header.experimenter_id = ntohl(ext->experimenter);
             dm->global_state =  ntohl(sm->global_state);
 
-	    // FIXME
             *msg = (struct ofl_msg_multipart_reply_header *)dm;
             return 0;
         }
@@ -920,11 +915,8 @@ ofl_exp_openstate_stats_reply_to_string(struct ofl_msg_multipart_reply_experimen
         case (OFPMP_EXP_GLOBAL_STATE_STATS):
         {
             struct ofl_exp_msg_multipart_reply_global_state *msg = (struct ofl_exp_msg_multipart_reply_global_state *)e;
-            // FIXME
-            // size_t last_table_id = -1;
-            // size_t i;
-
             extern int colors;
+
             fprintf(stream, "{stat_exp_type=\"");
             ofl_exp_stats_type_print(stream, e->type);
             fprintf(stream, "\", global_state=\"%s\"",decimal_to_binary(msg->global_state));
@@ -1073,8 +1065,6 @@ oxm_put_exp_64w(struct ofpbuf *buf, uint32_t header, uint32_t experimenter_id, u
 int
 ofl_exp_openstate_field_unpack(struct ofl_match *match, struct oxm_field const *f, void const *experimenter_id, void const *value, void const *mask)
 {
-    // FIXME!!!
-    //
     switch (f->index) {
         case OFI_OXM_EXP_STATE:{
             ofl_structs_match_exp_put32(match, f->header, ntohl(*((uint32_t*) experimenter_id)), ntohl(*((uint32_t*) value)));
@@ -1195,7 +1185,6 @@ ofl_exp_openstate_field_compare (struct ofl_match_tlv *packet_f, uint8_t **packe
     *packet_val = packet_f->value + EXP_ID_LEN;
 }
 
-// FIXME?
 void
 ofl_exp_openstate_field_match_std (struct ofl_match_tlv *flow_mod_match, struct ofl_match_tlv *flow_entry_match UNUSED, int *field_len, uint8_t **flow_mod_val, uint8_t **flow_entry_val, uint8_t **flow_mod_mask, uint8_t **flow_entry_mask)
 {
@@ -1377,9 +1366,6 @@ static bool
 state_entry_idle_timeout(struct state_table *table, struct state_entry *entry)
 {
     bool timeout;
-    // FIXME
-    // int found = 0;
-    // struct state_entry *e;
     struct timeval tv;
     gettimeofday(&tv,NULL);
 
@@ -1412,9 +1398,6 @@ static bool
 state_entry_hard_timeout(struct state_table *table, struct state_entry *entry)
 {
     bool timeout;
-    // FIXME
-    // int found = 0;
-    // struct state_entry *e;
     struct timeval tv;
     gettimeofday(&tv,NULL);
 
@@ -1985,8 +1968,6 @@ ofl_structs_state_stats_pack(struct ofl_exp_state_stats const *src, uint8_t *dst
 {
     struct ofp_exp_state_stats *state_stats;
     size_t total_len;
-    // FIXME!
-    // uint8_t *data;
     size_t  i;
     total_len = ROUND_UP(sizeof(struct ofp_exp_state_stats),8);
     state_stats = (struct ofp_exp_state_stats*) dst;
@@ -2343,11 +2324,8 @@ ofl_err
 ofl_structs_state_stats_unpack(struct ofp_exp_state_stats const *src, uint8_t const *buf UNUSED, size_t *len, struct ofl_exp_state_stats **dst, struct ofl_exp const * exp UNUSED)
 {
     struct ofl_exp_state_stats *s;
-    // FIXME
-    // ofl_err error;
     size_t slen;
     size_t i;
-    // int match_pos;
 
     if (*len < sizeof(struct ofp_exp_state_stats) ) {
         OFL_LOG_WARN(LOG_MODULE, "Received state stats has invalid length (%zu).", *len);
