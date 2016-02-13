@@ -852,13 +852,9 @@ ofl_exp_openstate_stats_request_to_string(struct ofl_msg_multipart_request_exper
         }
         case (OFPMP_EXP_GLOBAL_STATE_STATS):
         {
-            // FIXME!!!
-            struct ofl_exp_msg_multipart_request_global_state *msg;
             fprintf(stream, "{stat_exp_type=\"");
             ofl_exp_stats_type_print(stream, e->type);
             fprintf(stream, "\"");
-            // FIXME!
-            msg = (struct ofl_exp_msg_multipart_request_global_state *)e;
             break;
         }
     }
