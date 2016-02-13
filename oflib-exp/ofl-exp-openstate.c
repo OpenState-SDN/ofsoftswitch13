@@ -270,18 +270,19 @@ ofl_exp_openstate_msg_to_string(struct ofl_msg_experimenter const *msg)
     size_t str_size;
     FILE *stream = open_memstream(&str, &str_size);
 
-        struct ofl_exp_openstate_msg_header *exp = (struct ofl_exp_openstate_msg_header *)msg;
-        switch (exp->type) {
-        case (OFPT_EXP_STATE_MOD):
-        {
-            struct ofl_exp_msg_state_mod *state_mod = (struct ofl_exp_msg_state_mod *)exp;
-                OFL_LOG_DBG(LOG_MODULE, "Print Openstate STATE_MOD Experimenter message. osexp{type=\"%u\", command=\"%u\"}", exp->type, state_mod->command);
-            break;
+    struct ofl_exp_openstate_msg_header *exp = (struct ofl_exp_openstate_msg_header *)msg;
+    switch (exp->type) {
+	case (OFPT_EXP_STATE_MOD):
+	{
+	    struct ofl_exp_msg_state_mod *state_mod = (struct ofl_exp_msg_state_mod *)exp;
+	    OFL_LOG_DBG(LOG_MODULE, "Print Openstate STATE_MOD Experimenter message. osexp{type=\"%u\", command=\"%u\"}", exp->type, state_mod->command);
+	    break;
+	}
+        default: {
+	    OFL_LOG_WARN(LOG_MODULE, "Trying to print unknown Openstate Experimenter message. exp_msg{type=\"%u\"}", exp->type);
         }
-            default: {
-            OFL_LOG_WARN(LOG_MODULE, "Trying to print unknown Openstate Experimenter message. exp_msg{type=\"%u\"}", exp->type);
-            }
-        }
+    }
+
     fclose(stream);
     return str;
 }
@@ -465,11 +466,11 @@ ofl_exp_openstate_act_to_string(struct ofl_action_header const *act)
         }
     case (OFPAT_EXP_SET_GLOBAL_STATE):
         {
-        struct ofl_exp_action_set_global_state *a = (struct ofl_exp_action_set_global_state *)ext;
+	    struct ofl_exp_action_set_global_state *a = (struct ofl_exp_action_set_global_state *)ext;
             char *string = malloc(100);
             char string_value[33];
-        masked_value_print(string_value,decimal_to_binary(a->global_state),decimal_to_binary(a->global_state_mask));
-        sprintf(string, "{set_global_state=[global_state=%s]}", string_value);
+            masked_value_print(string_value,decimal_to_binary(a->global_state),decimal_to_binary(a->global_state_mask));
+            sprintf(string, "{set_global_state=[global_state=%s]}", string_value);
             return string;
         }
     }
