@@ -48,6 +48,18 @@
 OFL_LOG_INIT(LOG_MODULE)
 
 
+static char *
+ofl_exp_unknown_id_to_string(int id)
+{
+	char *str;
+        size_t str_size;
+        FILE *stream = open_memstream(&str, &str_size);
+        OFL_LOG_WARN(LOG_MODULE, "Trying to convert to string unknown EXPERIMENTER message (%u).", id);
+        fprintf(stream, "exp{id=\"0x%"PRIx32"\"}", id);
+        fclose(stream);
+        return str;
+}
+
 
 int
 ofl_exp_msg_pack(struct ofl_msg_experimenter const *msg, uint8_t **buf, size_t *buf_len)
@@ -133,13 +145,7 @@ ofl_exp_msg_to_string(struct ofl_msg_experimenter const *msg)
             return ofl_exp_openstate_msg_to_string(msg);
         }
         default: {
-            char *str;
-            size_t str_size;
-            FILE *stream = open_memstream(&str, &str_size);
-            OFL_LOG_WARN(LOG_MODULE, "Trying to convert to string unknown EXPERIMENTER message (%u).", msg->experimenter_id);
-            fprintf(stream, "exp{id=\"0x%"PRIx32"\"}", msg->experimenter_id);
-            fclose(stream);
-            return str;
+            return ofl_exp_unknown_id_to_string(msg->experimenter_id);
         }
     }
 }
@@ -213,7 +219,6 @@ ofl_exp_act_ofp_len(struct ofl_action_header const *act)
         default: {
             return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_EXPERIMENTER);
         }
-
     }
 }
 
@@ -228,8 +233,7 @@ ofl_exp_act_to_string(struct ofl_action_header const *act)
             return ofl_exp_openstate_act_to_string(act);
         }
         default: {
-	    /* FIXME! */
-            return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_EXPERIMENTER);
+            return ofl_exp_unknown_id_to_string(exp->experimenter_id);
         }
     }
 }
@@ -318,20 +322,14 @@ char *
 ofl_exp_stats_req_to_string (struct ofl_msg_multipart_request_header const *msg, struct ofl_exp const *exp)
 {
     struct ofl_msg_multipart_request_experimenter const *ext = (struct ofl_msg_multipart_request_experimenter const *) msg;
-    char *str;
-    size_t str_size;
-    FILE *stream = open_memstream(&str, &str_size);
     switch (ext->experimenter_id) {
         case (OPENSTATE_VENDOR_ID): {
             return ofl_exp_openstate_stats_request_to_string(ext, exp);
         }
         default: {
-            OFL_LOG_WARN(LOG_MODULE, "Trying to convert to string unknown EXPERIMENTER message (%u).", ext->experimenter_id);
-            fprintf(stream, "exp{id=\"0x%"PRIx32"\"}", ext->experimenter_id);
+	    return ofl_exp_unknown_id_to_string(ext->experimenter_id);
         }
     }
-    fclose(stream);
-    return str;
 }
 
 
@@ -339,20 +337,14 @@ char *
 ofl_exp_stats_reply_to_string (struct ofl_msg_multipart_reply_header const *msg, struct ofl_exp const *exp)
 {
     struct ofl_msg_multipart_reply_experimenter *ext = (struct ofl_msg_multipart_reply_experimenter *) msg;
-    char *str;
-    size_t str_size;
-    FILE *stream = open_memstream(&str, &str_size);
     switch (ext->experimenter_id) {
         case (OPENSTATE_VENDOR_ID): {
             return ofl_exp_openstate_stats_reply_to_string(ext, exp);
         }
         default: {
-            OFL_LOG_WARN(LOG_MODULE, "Trying to convert to string unknown EXPERIMENTER message %"PRIx32".", ext->experimenter_id);
-            fprintf(stream, "exp{id=\"0x%"PRIx32"\"}", ext->experimenter_id);
+            return ofl_exp_unknown_id_to_string(ext->experimenter_id);
         }
     }
-    fclose(stream);
-    return str;
 }
 
 
@@ -510,19 +502,14 @@ ofl_exp_err_free(struct ofl_msg_exp_error *msg){
 }
 
 char *
-ofl_exp_err_to_string(struct ofl_msg_exp_error const *msg){
+ofl_exp_err_to_string(struct ofl_msg_exp_error const *msg)
+{
     switch (msg->experimenter){
         case OPENSTATE_VENDOR_ID:{
             return ofl_exp_openstate_error_to_string(msg);
         }
         default:{
-            char *str;
-            size_t str_size;
-            FILE *stream = open_memstream(&str, &str_size);
-            OFL_LOG_WARN(LOG_MODULE, "Trying to convert to string unknown ERROR EXPERIMENTER message (%u).", msg->experimenter);
-            fprintf(stream, " exp{id=\"0x%"PRIx32"\"}", msg->experimenter);
-            fclose(stream);
-            return str;
+            return ofl_exp_unknown_id_to_string(msg->experimenter);
         }
     }
 }
