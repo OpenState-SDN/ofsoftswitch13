@@ -73,7 +73,7 @@ get_max_stack(void)
     return -1;
 }
 
-static uintptr_t
+static uintptr_t UNUSED
 stack_high(void)
 {
     static uintptr_t high;
@@ -83,27 +83,22 @@ stack_high(void)
     return high;
 }
 
-static uintptr_t
+static uintptr_t UNUSED
 stack_low(void)
 {
-    /* FIXME for AMD64 architectures */
-
 #ifdef __i386__
     uintptr_t low;
     asm("movl %%esp,%0" : "=g" (low));
     return low;
 #else
 #pragma GCC diagnostic ignored "-Wreturn-local-addr"
-
-    /* This causes a warning in GCC that cannot be disabled, so use it only on
-     * non-x86. */
     int dummy;
     return (uintptr_t) &dummy;
 #pragma GCC diagnostic pop
 #endif
 }
 
-static bool
+static bool UNUSED
 in_stack(void *p)
 {
     uintptr_t address = (uintptr_t) p;
@@ -113,6 +108,7 @@ in_stack(void *p)
 void
 backtrace_capture(struct backtrace *backtrace)
 {
+#if 0
     void **frame;
     size_t n;
 
@@ -124,5 +120,10 @@ backtrace_capture(struct backtrace *backtrace)
     {
         backtrace->frames[n++] = (uintptr_t) frame[1];
     }
+
     backtrace->n_frames = n;
+#else
+    backtrace->n_frames = 0;
+#endif
 }
+
