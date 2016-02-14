@@ -2825,7 +2825,7 @@ parse16(char *str, struct names16 *names, size_t names_num, uint16_t max, uint16
     return -1;
 }
 
-static int
+static int UNUSED
 parse16m(char *str, struct names16 *names, size_t names_num, uint16_t max, uint16_t *val, uint16_t *mask)
 {
     size_t i;
