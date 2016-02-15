@@ -121,8 +121,10 @@ dp_exp_stats(struct datapath *dp UNUSED, struct ofl_msg_multipart_request_experi
                 case (OFPMP_EXP_STATE_STATS_NUM): {
                     struct ofl_exp_msg_multipart_reply_state_num reply;
                     err = handle_stats_request_state_num(dp->pipeline, (struct ofl_exp_msg_multipart_request_state_num *)msg, sender, &reply);
-                    dp_send_message(dp, (struct ofl_msg_header *)&reply, sender);
-                    ofl_msg_free((struct ofl_msg_header *)msg, dp->exp);
+                    if (!err) {
+                        dp_send_message(dp, (struct ofl_msg_header *)&reply, sender);
+                        ofl_msg_free((struct ofl_msg_header *)msg, dp->exp);
+                    }
                     return err;
                 }
                 case (OFPMP_EXP_GLOBAL_STATE_STATS): {
