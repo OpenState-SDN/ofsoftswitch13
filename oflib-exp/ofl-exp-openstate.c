@@ -1568,6 +1568,7 @@ ofl_err state_table_set_extractor(struct state_table *table, struct key_extracto
         dest = &table->read_key;
         OFL_LOG_DBG(LOG_MODULE, "Lookup-scope set");
         }
+    dest->table_id = ke->table_id;
     dest->field_count = ke->field_count;
     memcpy(dest->fields, ke->fields, sizeof(uint32_t)*ke->field_count);
     return 0;
@@ -1818,8 +1819,12 @@ handle_stats_request_state_num(struct pipeline *pl, struct ofl_exp_msg_multipart
              .experimenter_id = OPENSTATE_VENDOR_ID},
              .type = OFPMP_EXP_STATE_STATS_NUM},
              .count = (uint32_t) hmap_count(&pl->tables[msg->table_id]->state_table->state_entries)};
+
+        return 0;
+    } else {
+       return ofl_error(OFPET_EXPERIMENTER, OFPEC_BAD_TABLE_ID);
     }
-    return 0;
+
 }
 
 ofl_err
@@ -2535,6 +2540,9 @@ get_experimenter_id(struct ofl_msg_header const *msg)
     /*check if the msg that triggers the err is experimenter*/
     if (msg->type == OFPT_EXPERIMENTER){
         exp_id = ((struct ofl_msg_experimenter *) msg)->experimenter_id;
+    }
+    else if (msg->type == OFPT_MULTIPART_REQUEST && ((struct ofl_exp_openstate_msg_multipart_request *) msg)->type == OFPMP_EXP_STATE_STATS_NUM){
+        exp_id = ((struct ofl_exp_openstate_msg_multipart_request *) msg)->header.experimenter_id;
     }
     /*if not, the error is triggered by an experimenter match/action*/
     else if(msg->type == OFPT_FLOW_MOD) {
