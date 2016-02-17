@@ -2564,7 +2564,7 @@ get_experimenter_id(struct ofl_msg_header const *msg)
                     case (OFPIT_WRITE_METADATA):
                     case (OFPIT_METER):
                     case (OFPIT_EXPERIMENTER):
-			assert(!"get_experimenter_id");
+			OFL_LOG_WARN(LOG_MODULE, "Get experimenter id: unexpected instruction!");
                 }
             }
         }
