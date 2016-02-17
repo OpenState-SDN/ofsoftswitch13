@@ -47,8 +47,6 @@
 #include "dp_capabilities.h"
 #include "oflib-exp/ofl-exp-openstate.h"
 
-/* Resets all protocol fields to NULL */
-
 
 int packet_parse(struct packet const *pkt, struct ofl_match *, struct protocols_std *proto);
 
@@ -56,6 +54,10 @@ int packet_parse(struct packet const *pkt, struct ofl_match *m, struct protocols
 {
 	size_t offset = 0;
         uint8_t next_proto = 0;
+
+	/* Resets all protocol fields to NULL */
+
+	protocol_reset(proto);
 
         /* Ethernet */
 
