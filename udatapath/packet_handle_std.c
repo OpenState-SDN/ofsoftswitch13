@@ -400,23 +400,23 @@ packet_handle_std_validate(struct packet_handle_std *handle) {
 
     HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv, hmap_node,
         hash_int(OXM_OF_METADATA,0), &handle->match.match_fields){
-        metadata = (uint64_t) *f->value;
+        metadata = *(uint64_t *)(f->value);
     }
 
     HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv, hmap_node,
         hash_int(OXM_OF_TUNNEL_ID,0), & handle->match.match_fields){
-        tunnel_id = (uint64_t) *f->value;
+        tunnel_id = *(uint64_t *)(f->value);
     }
 
     HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv, hmap_node,
         hash_int(OXM_EXP_STATE,0), & handle->match.match_fields){
-        state = (uint32_t) *(f->value + EXP_ID_LEN);
-                    has_state = true;
+        state = *(uint32_t *)(f->value + EXP_ID_LEN);
+        has_state = true;
     }
 
     HMAP_FOR_EACH_WITH_HASH(f, struct ofl_match_tlv, hmap_node,
-            hash_int(OXM_EXP_GLOBAL_STATE,0), &handle->match.match_fields){
-            current_global_state = (uint32_t) *(f->value + EXP_ID_LEN);
+        hash_int(OXM_EXP_GLOBAL_STATE,0), &handle->match.match_fields){
+        current_global_state = *(uint32_t *)(f->value + EXP_ID_LEN);
     }
 
     HMAP_FOR_EACH_SAFE(iter, next, struct ofl_match_tlv, hmap_node, &handle->match.match_fields)
