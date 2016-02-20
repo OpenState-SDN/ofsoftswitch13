@@ -95,7 +95,7 @@ struct ofp_exp_msg_state_mod {
     uint8_t payload[];
 };
 
-struct ofp_exp_stateful_table_config { 
+struct ofp_exp_stateful_table_config {
     uint8_t table_id;
     uint8_t stateful;
 };

@@ -48,10 +48,11 @@
 OFL_LOG_INIT(LOG_MODULE)
 
 
+
 static char *
 ofl_exp_unknown_id_to_string(int id)
 {
-	char *str;
+        char *str;
         size_t str_size;
         FILE *stream = open_memstream(&str, &str_size);
         OFL_LOG_WARN(LOG_MODULE, "Trying to convert to string unknown EXPERIMENTER message (%u).", id);
@@ -276,7 +277,7 @@ ofl_exp_stats_reply_pack (struct ofl_msg_multipart_reply_header const *msg, uint
 
 ofl_err
 ofl_exp_stats_req_unpack (struct ofp_multipart_request const *os, uint8_t const *buf, size_t *len,
-			  struct ofl_msg_multipart_request_header **msg, struct ofl_exp const *exp)
+              struct ofl_msg_multipart_request_header **msg, struct ofl_exp const *exp)
 {
     struct ofp_experimenter_stats_header *ext  = (struct ofp_experimenter_stats_header *)os->body;
 
@@ -298,7 +299,7 @@ ofl_exp_stats_req_unpack (struct ofp_multipart_request const *os, uint8_t const 
 
 ofl_err
 ofl_exp_stats_reply_unpack (struct ofp_multipart_reply const *os, uint8_t const *buf, size_t *len,
-			    struct ofl_msg_multipart_reply_header **msg, struct ofl_exp const *exp)
+                struct ofl_msg_multipart_reply_header **msg, struct ofl_exp const *exp)
 {
     struct ofp_experimenter_stats_header *ext = (struct ofp_experimenter_stats_header *)os->body;
 
@@ -327,7 +328,7 @@ ofl_exp_stats_req_to_string (struct ofl_msg_multipart_request_header const *msg,
             return ofl_exp_openstate_stats_request_to_string(ext, exp);
         }
         default: {
-	    return ofl_exp_unknown_id_to_string(ext->experimenter_id);
+        return ofl_exp_unknown_id_to_string(ext->experimenter_id);
         }
     }
 }
@@ -436,7 +437,7 @@ ofl_exp_field_compare (struct ofl_match_tlv *f, struct ofl_match_tlv *packet_f, 
 
 void
 ofl_exp_field_match_std (struct ofl_match_tlv *flow_mod_match, struct ofl_match_tlv * flow_entry_match UNUSED, int *field_len,
-			 uint8_t **flow_mod_val, uint8_t **flow_entry_val, uint8_t **flow_mod_mask, uint8_t **flow_entry_mask)
+             uint8_t **flow_mod_val, uint8_t **flow_entry_val, uint8_t **flow_mod_mask, uint8_t **flow_entry_mask)
 {
     // FIXME!
     switch(*((uint32_t*)(flow_mod_match->value)))

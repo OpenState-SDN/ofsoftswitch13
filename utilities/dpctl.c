@@ -931,7 +931,6 @@ queue_get_config(struct vconn *vconn, int argc UNUSED, char *argv[])
 }
 
 
-
 static void
 set_desc(struct vconn *vconn, int argc UNUSED, char *argv[])
 {
@@ -2167,7 +2166,6 @@ parse_actions(char *str, size_t *acts_num, struct ofl_action_header ***acts)
 
 }
 
-
 static void
 parse_inst(char *str, struct ofl_instruction_header **inst)
 {
@@ -2265,7 +2263,6 @@ parse_state(char *str, uint8_t *get_from_state, uint32_t *state)
     }
 }
 
-
 static void
 parse_state_stat_args(char *str, struct ofl_exp_msg_multipart_request_state *req)
 {
@@ -2280,7 +2277,6 @@ parse_state_stat_args(char *str, struct ofl_exp_msg_multipart_request_state *req
         ofp_fatal(0, "Error parsing state_stat arg: %s.", token);
     }
 }
-
 
 static void
 parse_flow_stat_args(char *str, struct ofl_msg_multipart_request_flow *req)

@@ -169,9 +169,9 @@ struct ofl_exp_action_set_global_state {
 };
 
 
-/*************************************************************************
- *                        experimenter state table
- *************************************************************************/
+/*************************************************************************/
+/*                        experimenter state table                       */
+/*************************************************************************/
 
 
 struct key_extractor {
@@ -213,6 +213,8 @@ state_table_destroy(struct state_table *);
 uint8_t
 state_table_is_stateful(struct state_table *);
 
+bool state_table_is_configured(struct state_table *table);
+
 struct state_entry *
 state_table_lookup(struct state_table*, struct packet *);
 
@@ -231,12 +233,7 @@ state_table_del_state(struct state_table *, uint8_t *, uint32_t);
 void
 state_table_timeout(struct state_table *table);
 
-bool state_table_is_configured(struct state_table *table);
-
 /*experimenter message functions*/
-
-char *
-ofl_exp_openstate_msg_to_string(struct ofl_msg_experimenter const *msg);
 
 int
 ofl_exp_openstate_msg_pack(struct ofl_msg_experimenter const *msg, uint8_t **buf, size_t *buf_len);
@@ -248,11 +245,9 @@ int
 ofl_exp_openstate_msg_free(struct ofl_msg_experimenter *msg);
 
 char *
-OFl_exp_openstate_msg_to_string(struct ofl_msg_experimenter const *msg);
-
+ofl_exp_openstate_msg_to_string(struct ofl_msg_experimenter const *msg);
 
 /*experimenter action functions*/
-
 
 int
 ofl_exp_openstate_act_pack(struct ofl_action_header const *src, struct ofp_action_header *dst);
@@ -295,7 +290,6 @@ int
 ofl_exp_openstate_stats_reply_free(struct ofl_msg_multipart_reply_header *msg);
 
 /*experimenter match fields functions*/
-
 int
 ofl_exp_openstate_field_unpack(struct ofl_match *match, struct oxm_field const *f, void const *experimenter_id, void const *value, void const *mask);
 
@@ -316,15 +310,6 @@ ofl_exp_openstate_field_overlap_a (struct ofl_match_tlv *f_a, int *field_len, ui
 
 void
 ofl_exp_openstate_field_overlap_b (struct ofl_match_tlv *f_b, int *field_len, uint8_t **val_b, uint8_t **mask_b, uint64_t *all_mask);
-
-void
-ofl_exp_openstate_error_pack (struct ofl_msg_exp_error const *msg, uint8_t **buf, size_t *buf_len);
-
-void
-ofl_exp_openstate_error_free (struct ofl_msg_exp_error *msg);
-
-char *
-ofl_exp_openstate_error_to_string(struct ofl_msg_exp_error const *msg);
 
 /* Handles a state_mod message */
 ofl_err
@@ -368,6 +353,16 @@ ofl_structs_state_stats_unpack(struct ofp_exp_state_stats const *src, uint8_t co
 
 ofl_err
 ofl_utils_count_ofp_state_stats(void *data, size_t data_len, size_t *count);
+
+void
+ofl_exp_openstate_error_pack (struct ofl_msg_exp_error const *msg, uint8_t **buf, size_t *buf_len);
+
+void 
+ofl_exp_openstate_error_free (struct ofl_msg_exp_error *msg);
+
+char *
+ofl_exp_openstate_error_to_string(struct ofl_msg_exp_error const *msg);
+
 
 void
 ofl_exp_stats_type_print(FILE *stream, uint32_t type);

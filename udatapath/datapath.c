@@ -320,32 +320,32 @@ remote_rconn_run(struct datapath *dp, struct remote *r, uint8_t conn_id) {
                     error = handle_control_msg(dp, msg, &sender);
                 }
 
-                    if (error) {
-                   /* [*] The highest bit of 'error' is always set to one, but on-the-wire we
-                   need full compliance to OF specification: the 'type' of an experimenter
-                   error message must be 0xffff instead of 0x7ffff. */
-                   if ((ofl_error_type(error) | 0x8000) == OFPET_EXPERIMENTER){
-                       struct ofl_msg_exp_error err =
+                if (error) {
+                    /* [*] The highest bit of 'error' is always set to one, but on-the-wire we
+                    need full compliance to OF specification: the 'type' of an experimenter
+                    error message must be 0xffff instead of 0x7ffff. */
+                    if ((ofl_error_type(error) | 0x8000) == OFPET_EXPERIMENTER){
+                        struct ofl_msg_exp_error err =
                                {{.type = OFPT_ERROR},
                                 .type = ofl_error_type(error) | 0x8000, // [*]
                                 .exp_type = ofl_error_code(error),
                                 .experimenter = get_experimenter_id(msg),
                                 .data_length = buffer->size,
                                 .data        = buffer->data};
-                       dp_send_message(dp, (struct ofl_msg_header *)&err, &sender);
+                        dp_send_message(dp, (struct ofl_msg_header *)&err, &sender);
                     }
-                   else{
-                    struct ofl_msg_error err =
-                            {{.type = OFPT_ERROR},
-                             .type = ofl_error_type(error),
-                             .code = ofl_error_code(error),
-                             .data_length = buffer->size,
-                             .data        = buffer->data};
-                    dp_send_message(dp, (struct ofl_msg_header *)&err, &sender);
-                }
-                   if (msg != NULL){
+                    else{
+                        struct ofl_msg_error err =
+                               {{.type = OFPT_ERROR},
+                                .type = ofl_error_type(error),
+                                .code = ofl_error_code(error),
+                                .data_length = buffer->size,
+                                .data        = buffer->data};
+                        dp_send_message(dp, (struct ofl_msg_header *)&err, &sender);
+                    }
+                    if (msg != NULL){
                         ofl_msg_free(msg, dp->exp);
-                   }
+                    }
                 }
 
                 ofpbuf_delete(buffer);

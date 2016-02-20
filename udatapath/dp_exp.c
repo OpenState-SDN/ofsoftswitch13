@@ -54,7 +54,6 @@ static struct vlog_rate_limit rl = VLOG_RATE_LIMIT_INIT(60, 60);
 
 void
 dp_exp_action(struct packet *pkt, struct ofl_action_experimenter *act) {
-    
     if(act->experimenter_id == OPENSTATE_VENDOR_ID)
     {
         struct ofl_exp_openstate_act_header *action;
@@ -83,8 +82,8 @@ dp_exp_action(struct packet *pkt, struct ofl_action_experimenter *act) {
                 
                 global_state = (global_state & ~(wns->global_state_mask)) | (wns->global_state & wns->global_state_mask);
                 pkt->dp->global_state = global_state;
-                 break;
-            }  
+                break;
+            }
             default:
                 VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to execute unknown experimenter action (%u).", htonl(act->experimenter_id));
                 break;
