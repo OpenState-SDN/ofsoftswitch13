@@ -98,7 +98,21 @@ dp_exp_action(struct packet *pkt, struct ofl_action_experimenter *act) {
 
 void
 dp_exp_inst(struct packet *pkt UNUSED, struct ofl_instruction_experimenter *inst) {
-	VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to execute unknown experimenter instruction (%u).", inst->experimenter_id);
+    switch (inst->experimenter_id) {
+        case (OPENSTATE_VENDOR_ID): {
+            struct ofl_exp_openstate_instr_header *openstate_inst = (struct ofl_exp_openstate_instr_header*) inst;
+            switch (openstate_inst->instr_type) {
+                default: {
+                    VLOG_WARN_RL(LOG_MODULE, &rl, "Unknown OPENSTATE instruction type!");
+                    return;
+                }
+            }
+        }
+        default: {
+            VLOG_WARN_RL(LOG_MODULE, &rl, "Trying to execute unknown experimenter instruction (%u).", inst->experimenter_id);
+        }
+    }
+
 }
 
 ofl_err
