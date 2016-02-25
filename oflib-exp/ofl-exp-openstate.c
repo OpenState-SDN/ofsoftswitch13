@@ -159,10 +159,10 @@ ofl_structs_set_global_state_unpack(struct ofp_exp_set_global_state const *src, 
 }
 
 int
-ofl_exp_openstate_msg_pack(struct ofl_msg_experimenter const *msg, uint8_t **buf UNUSED, size_t *buf_len UNUSED)
+ofl_exp_openstate_msg_pack(struct ofl_msg_experimenter const *msg, uint8_t **buf UNUSED, size_t *buf_len UNUSED, struct ofl_exp const *exp UNUSED)
 {
-    struct ofl_exp_openstate_msg_header *exp = (struct ofl_exp_openstate_msg_header *)msg;
-    switch (exp->type) {
+    struct ofl_exp_openstate_msg_header *exp_msg = (struct ofl_exp_openstate_msg_header *)msg;
+    switch (exp_msg->type) {
         default: {
            OFL_LOG_WARN(LOG_MODULE, "Trying to pack unknown Openstate Experimenter message.");
            break;
