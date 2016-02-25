@@ -126,6 +126,14 @@ static struct ofl_exp_field dp_exp_field =
          .overlap_a  = ofl_exp_field_overlap_a,
          .overlap_b  = ofl_exp_field_overlap_b};
 
+/* Callbacks for processing experimenter instructions in OFLib.*/
+static struct ofl_exp_inst dp_exp_instruction =
+		{.pack      = ofl_exp_inst_pack,
+         .unpack    = ofl_exp_inst_unpack,
+         .free      = ofl_exp_inst_free,
+         .ofp_len   = ofl_exp_inst_ofp_len,
+         .to_string = ofl_exp_inst_to_string};
+
 /* Callbacks for processing experimenter errors in OFLib. */
 static struct ofl_exp_err dp_exp_err =
         {.pack      = ofl_exp_err_pack,
@@ -134,7 +142,7 @@ static struct ofl_exp_err dp_exp_err =
 
 static struct ofl_exp dp_exp =
         {.act   = &dp_exp_act,
-         .inst  = NULL,
+         .inst  = &dp_exp_instruction,
          .match = NULL,
          .stats = &dp_exp_statistics,
          .msg   = &dp_exp_msg,

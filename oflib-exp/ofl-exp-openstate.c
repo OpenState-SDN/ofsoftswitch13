@@ -1261,6 +1261,117 @@ ofl_error_openstate_exp_type_print(FILE *stream, uint16_t exp_type)
     }
 }
 
+/* Instruction expertimenter callback implementation */
+//TODO implement callbacks
+int
+ofl_exp_openstate_inst_pack (struct ofl_instruction_header const *src, struct ofp_instruction *dst UNUSED) {
+
+    struct ofl_instruction_experimenter *exp = (struct ofl_instruction_experimenter *) src;
+    struct ofl_exp_openstate_instr_header *ext = (struct ofl_exp_openstate_instr_header *) exp;
+
+    switch (ext->instr_type) {
+        default:
+            OFL_LOG_WARN(LOG_MODULE, "Trying to pack unknown instruction type.");
+            return 0;
+    }
+}
+
+ofl_err
+ofl_exp_openstate_inst_unpack (struct ofp_instruction const *src, size_t *len, struct ofl_instruction_header **dst) {
+
+    struct ofl_instruction_header *inst = NULL;
+    size_t ilen;
+    ofl_err error = 0;
+    struct ofp_instruction_experimenter_header *exp;
+
+    OFL_LOG_DBG(LOG_MODULE, "ofl_exp_openstate_inst_unpack");
+
+    if (*len < sizeof(struct ofp_instruction_experimenter_header)) {
+        OFL_LOG_WARN(LOG_MODULE, "Received EXPERIMENTER instruction has invalid length (%zu).", *len);
+        return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
+    }
+
+    exp = (struct ofp_instruction_experimenter_header *) src;
+
+    if (*len < ntohs(exp->len)) {
+        OFL_LOG_WARN(LOG_MODULE, "Received instruction has invalid length (set to %u, but only %zu received).", ntohs(exp->len), *len);
+        return ofl_error(OFPET_BAD_ACTION, OFPBAC_BAD_LEN);
+    }
+    ilen = ntohs(exp->len);
+
+    struct ofp_openstate_instruction_experimenter_header *openstate_exp = (struct ofp_openstate_instruction_experimenter_header *) exp;
+    switch (ntohl(openstate_exp->instr_type)) {
+        default: {
+            struct ofl_instruction_experimenter *di;
+            di = (struct ofl_instruction_experimenter *)malloc(sizeof(struct ofl_instruction_experimenter));
+            di->experimenter_id  = ntohl(exp->experimenter); //OPENSTATE_VENDOR_ID
+            inst = (struct ofl_instruction_header *)di;
+            OFL_LOG_WARN(LOG_MODULE, "The received OPENSTATE instruction type (%u) is invalid.", ntohs(openstate_exp->instr_type));
+            error = ofl_error(OFPET_EXPERIMENTER, OFPET_BAD_EXP_INSTRUCTION);
+            break;
+        }
+    }
+
+    (*dst) = inst;
+
+    if (!error && ilen != 0) {
+        *len = *len - ntohs(src->len) + ilen;
+        OFL_LOG_WARN(LOG_MODULE, "The received instruction contained extra bytes (%zu).", ilen);
+        ofl_exp_openstate_inst_free(inst);
+        return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
+    }
+
+    *len -= ntohs(src->len);
+    return error;
+}
+
+int
+ofl_exp_openstate_inst_free (struct ofl_instruction_header *i) {
+    struct ofl_instruction_experimenter* exp = (struct ofl_instruction_experimenter *) i;
+        struct ofl_exp_openstate_instr_header *ext = (struct ofl_exp_openstate_instr_header *)exp;
+        switch (ext->instr_type) {
+            default:
+            {
+                OFL_LOG_WARN(LOG_MODULE, "Unknown OPENSTATE instruction type. Perhaps not freed correctly");
+            }
+        }
+    free(i);
+    return 1;
+}
+
+size_t
+ofl_exp_openstate_inst_ofp_len (struct ofl_instruction_header const *i) {
+    struct ofl_instruction_experimenter *exp = (struct ofl_instruction_experimenter *) i;
+
+    struct ofl_exp_openstate_instr_header *ext = (struct ofl_exp_openstate_instr_header *)exp;
+    switch (ext->instr_type) {
+        default:
+            OFL_LOG_WARN(LOG_MODULE, "Trying to len unknown OPENSTATE instruction type.");
+            return 0;
+    }
+}
+
+char *
+ofl_exp_openstate_inst_to_string (struct ofl_instruction_header const *i)
+{
+    struct ofl_instruction_experimenter *exp = (struct ofl_instruction_experimenter *) i;
+
+    char *str;
+    size_t str_size;
+    FILE *stream = open_memstream(&str, &str_size);
+
+    struct ofl_exp_openstate_instr_header *ext = (struct ofl_exp_openstate_instr_header *)exp;
+    switch (ext->instr_type) {
+        default: {
+            OFL_LOG_WARN(LOG_MODULE, "Trying to print unknown OPENSTATE Experimenter instruction.");
+            fprintf(stream, "OFPIT{type=\"%u\"}", ext->instr_type);
+        }
+    }
+
+    fclose(stream);
+    return str;
+
+}
 
 /*experimenter table functions*/
 

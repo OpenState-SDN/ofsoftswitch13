@@ -230,6 +230,13 @@ static struct ofl_exp_field dpctl_exp_field =
          .overlap_a  = ofl_exp_field_overlap_a,
          .overlap_b  = ofl_exp_field_overlap_b};
 
+static struct ofl_exp_inst dpctl_exp_instruction =
+		{.pack      = ofl_exp_inst_pack,
+         .unpack    = ofl_exp_inst_unpack,
+         .free      = ofl_exp_inst_free,
+         .ofp_len   = ofl_exp_inst_ofp_len,
+         .to_string = ofl_exp_inst_to_string};
+
 static struct ofl_exp_err dpctl_exp_err =
         {.pack      = ofl_exp_err_pack,
          .free      = ofl_exp_err_free,
@@ -237,7 +244,7 @@ static struct ofl_exp_err dpctl_exp_err =
 
 static struct ofl_exp dpctl_exp =
         {.act   = &dpctl_exp_act,
-         .inst  = NULL,
+         .inst  = &dpctl_exp_instruction,
          .match = NULL,
          .stats = &dpctl_exp_stats,
          .msg   = &dpctl_exp_msg,

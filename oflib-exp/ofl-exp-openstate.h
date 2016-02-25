@@ -354,6 +354,24 @@ ofl_structs_state_stats_unpack(struct ofp_exp_state_stats const *src, uint8_t co
 ofl_err
 ofl_utils_count_ofp_state_stats(void *data, size_t data_len, size_t *count);
 
+/* instruction experimenter callback functions */
+int
+ofl_exp_openstate_inst_pack (struct ofl_instruction_header const *src, struct ofp_instruction *dst);
+
+ofl_err
+ofl_exp_openstate_inst_unpack (struct ofp_instruction const *src, size_t *len, struct ofl_instruction_header **dst);
+
+int
+ofl_exp_openstate_inst_free (struct ofl_instruction_header *i);
+
+size_t
+ofl_exp_openstate_inst_ofp_len (struct ofl_instruction_header const *i);
+
+char *
+ofl_exp_openstate_inst_to_string (struct ofl_instruction_header const *i);
+
+/* Experimenter erorrs callback functions */
+
 void
 ofl_exp_openstate_error_pack (struct ofl_msg_exp_error const *msg, uint8_t **buf, size_t *buf_len);
 
@@ -390,6 +408,14 @@ ofl_structs_match_exp_put64(struct ofl_match *match, uint32_t header, uint32_t e
 
 void
 ofl_structs_match_exp_put64m(struct ofl_match *match, uint32_t header, uint32_t experimenter_id, uint64_t value, uint64_t mask);
+
+/*************************************************************************/
+/*                        experimenter instructions ofl_exp                   */
+/*************************************************************************/
+struct ofl_exp_openstate_instr_header {
+    struct ofl_instruction_experimenter   header; /* OPENSTATE_VENDOR_ID */
+    uint32_t   instr_type;
+};
 
 uint32_t
 get_experimenter_id(struct ofl_msg_header const *msg);

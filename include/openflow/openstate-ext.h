@@ -21,6 +21,22 @@ enum oxm_exp_match_fields {
 
 /****************************************************************
  *
+ * OpenFlow experimenter Instructions
+ *
+ ****************************************************************/
+/*enum ofp_exp_instructions {
+    OFPIT_EXP_***
+};*/
+
+struct ofp_openstate_instruction_experimenter_header {
+    struct ofp_instruction_experimenter_header header;   /*  OpenFlow's standard experimenter action header*/
+    uint32_t instr_type;   /* type in header is OFPIT_EXPERIMENTER, instr_type is one of ofp_exp_instructions */
+    uint8_t pad[4];
+};
+OFP_ASSERT(sizeof(struct ofp_openstate_instruction_experimenter_header) == 16);
+
+/****************************************************************
+ *
  * OpenFlow experimenter Actions
  *
  ****************************************************************/
@@ -77,7 +93,8 @@ enum ofp_exp_openstate_errors{
     OFPEC_BAD_EXP_ACTION,
     OFPEC_BAD_EXP_LEN,
     OFPEC_BAD_TABLE_ID,
-    OFPEC_BAD_MATCH_WILDCARD
+    OFPEC_BAD_MATCH_WILDCARD,
+    OFPET_BAD_EXP_INSTRUCTION
 };
 
 /****************************************************************
