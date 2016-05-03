@@ -578,7 +578,7 @@ stats_state_num(struct vconn *vconn, int argc UNUSED, char *argv[] UNUSED) {
                  .type = OFPMP_EXP_STATE_STATS_NUM},
                  .table_id = table_id};
 
-    parse8(argv[0], NULL, 0, 0xff, &table_id);
+    parse8(argv[0], NULL, 0, 0xff, &(req.table_id));
     dpctl_transact_and_print(vconn, (struct ofl_msg_header *)&req, NULL);
 }
 
